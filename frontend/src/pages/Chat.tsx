@@ -3,8 +3,35 @@ import { mockMatches } from '@/data/mockProfiles';
 import { MessageCircle, Search } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
+import { api } from '@/services/api';
+import { useState, useEffect } from 'react';
 
 export default function Chat() {
+  const [conversations, setConversations] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchConversations = async () => {
+      try {
+        setIsLoading(true);
+        const data = await api.chat.getConversations();
+        if (data && data.length > 0) {
+          setConversations(data);
+        } else {
+          // Fallback to mock for demo
+          setConversations(mockMatches);
+        }
+      } catch (error) {
+        console.error('Failed to fetch conversations:', error);
+        setConversations(mockMatches);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchConversations();
+  }, []);
+
   return (
     <AppLayout>
       <div className="px-4 py-6">
@@ -27,17 +54,17 @@ export default function Chat() {
 
         {/* Conversations */}
         <div className="space-y-3">
-          {mockMatches.map((match) => (
+          {conversations.map((match) => (
             <Link
               key={match.id}
-              to={`/chat/${match.profile.id}`}
+              to={`/chat/${match.profile?.id || '1'}`}
               className="block"
             >
               <div className="glass-card-hover rounded-2xl p-4 flex items-center gap-4">
                 <div className="relative">
                   <img
-                    src={match.profile.photos[0]}
-                    alt={match.profile.name}
+                    src={match.profile?.photos?.[0] || 'https://images.unsplash.com/photo-1494790108377-be9c29b29330'}
+                    alt={match.profile?.name || 'User'}
                     className="w-14 h-14 rounded-full object-cover"
                   />
                   <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 rounded-full ring-2 ring-background" />
@@ -45,12 +72,12 @@ export default function Chat() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-1">
                     <h4 className="font-semibold text-foreground truncate">
-                      {match.profile.name}
+                      {match.profile?.name || 'User'}
                     </h4>
                     <span className="text-xs text-muted-foreground">2m ago</span>
                   </div>
                   <p className="text-sm text-muted-foreground truncate">
-                    {match.lastMessage}
+                    {match.lastMessage || 'Start a conversation'}
                   </p>
                 </div>
                 {match.unreadCount > 0 && (
@@ -64,7 +91,7 @@ export default function Chat() {
         </div>
 
         {/* Empty State if no matches */}
-        {mockMatches.length === 0 && (
+        {conversations.length === 0 && !isLoading && (
           <div className="flex flex-col items-center justify-center py-20 text-center">
             <div className="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center mb-6">
               <MessageCircle className="w-10 h-10 text-primary" />

@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Heart, Mail, Lock, ArrowLeft, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
+import { api } from '@/services/api';
 
 export default function Login() {
   const navigate = useNavigate();
@@ -13,12 +14,20 @@ export default function Login() {
     email: '',
     password: '',
   });
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Demo login - would connect to backend
-    toast.success('Welcome back!');
-    navigate('/discover');
+    setIsLoading(true);
+    try {
+      await api.auth.login(formData.email, formData.password);
+      toast.success('Welcome back!');
+      navigate('/discover');
+    } catch (error: any) {
+      toast.error(error.message || 'Login failed');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -101,8 +110,8 @@ export default function Login() {
               </Link>
             </div>
 
-            <Button type="submit" variant="gradient" className="w-full" size="lg">
-              Sign In
+            <Button type="submit" variant="gradient" className="w-full" size="lg" disabled={isLoading}>
+              {isLoading ? 'Signing In...' : 'Sign In'}
             </Button>
           </form>
 

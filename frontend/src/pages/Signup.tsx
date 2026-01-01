@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Heart, Mail, Lock, User, ArrowLeft, Eye, EyeOff, Phone } from 'lucide-react';
 import { toast } from 'sonner';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { api } from '@/services/api';
 
 export default function Signup() {
   const navigate = useNavigate();
@@ -16,18 +17,36 @@ export default function Signup() {
     email: '',
     phone: '',
     password: '',
-    gender: '',
-    lookingFor: '',
+    gender: 'male',
+    lookingFor: 'female',
   });
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (step < 2) {
       setStep(step + 1);
       return;
     }
-    toast.success('Account created! Welcome to Soulmate');
-    navigate('/discover');
+
+    setIsLoading(true);
+    try {
+      await api.auth.register({
+        email: formData.email,
+        name: formData.name,
+        phone: formData.phone,
+        password: formData.password,
+        gender: formData.gender,
+        looking_for: formData.lookingFor,
+        age: 25 // Default age for now as it's required by API but not in form
+      });
+      toast.success('Account created! Welcome to Soulmate');
+      navigate('/discover');
+    } catch (error: any) {
+      toast.error(error.message || 'Registration failed');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -47,9 +66,8 @@ export default function Signup() {
           {[1, 2].map((s) => (
             <div
               key={s}
-              className={`h-1 w-8 rounded-full transition-colors ${
-                s <= step ? 'bg-primary' : 'bg-muted'
-              }`}
+              className={`h-1 w-8 rounded-full transition-colors ${s <= step ? 'bg-primary' : 'bg-muted'
+                }`}
             />
           ))}
         </div>
@@ -169,18 +187,16 @@ export default function Signup() {
                     className="flex gap-4"
                   >
                     <label className="flex-1 cursor-pointer">
-                      <div className={`glass-card rounded-xl p-4 text-center transition-all ${
-                        formData.gender === 'male' ? 'ring-2 ring-primary bg-primary/10' : ''
-                      }`}>
+                      <div className={`glass-card rounded-xl p-4 text-center transition-all ${formData.gender === 'male' ? 'ring-2 ring-primary bg-primary/10' : ''
+                        }`}>
                         <RadioGroupItem value="male" className="sr-only" />
                         <span className="text-2xl mb-2 block">👨</span>
                         <span className="font-medium">Man</span>
                       </div>
                     </label>
                     <label className="flex-1 cursor-pointer">
-                      <div className={`glass-card rounded-xl p-4 text-center transition-all ${
-                        formData.gender === 'female' ? 'ring-2 ring-primary bg-primary/10' : ''
-                      }`}>
+                      <div className={`glass-card rounded-xl p-4 text-center transition-all ${formData.gender === 'female' ? 'ring-2 ring-primary bg-primary/10' : ''
+                        }`}>
                         <RadioGroupItem value="female" className="sr-only" />
                         <span className="text-2xl mb-2 block">👩</span>
                         <span className="font-medium">Woman</span>
@@ -197,18 +213,16 @@ export default function Signup() {
                     className="flex gap-4"
                   >
                     <label className="flex-1 cursor-pointer">
-                      <div className={`glass-card rounded-xl p-4 text-center transition-all ${
-                        formData.lookingFor === 'woman' ? 'ring-2 ring-primary bg-primary/10' : ''
-                      }`}>
+                      <div className={`glass-card rounded-xl p-4 text-center transition-all ${formData.lookingFor === 'woman' ? 'ring-2 ring-primary bg-primary/10' : ''
+                        }`}>
                         <RadioGroupItem value="woman" className="sr-only" />
                         <span className="text-2xl mb-2 block">👩</span>
                         <span className="font-medium">Woman</span>
                       </div>
                     </label>
                     <label className="flex-1 cursor-pointer">
-                      <div className={`glass-card rounded-xl p-4 text-center transition-all ${
-                        formData.lookingFor === 'man' ? 'ring-2 ring-primary bg-primary/10' : ''
-                      }`}>
+                      <div className={`glass-card rounded-xl p-4 text-center transition-all ${formData.lookingFor === 'man' ? 'ring-2 ring-primary bg-primary/10' : ''
+                        }`}>
                         <RadioGroupItem value="man" className="sr-only" />
                         <span className="text-2xl mb-2 block">👨</span>
                         <span className="font-medium">Man</span>
@@ -217,8 +231,8 @@ export default function Signup() {
                   </RadioGroup>
                 </div>
 
-                <Button type="submit" variant="gradient" className="w-full" size="lg">
-                  Create Account
+                <Button type="submit" variant="gradient" className="w-full" size="lg" disabled={isLoading}>
+                  {isLoading ? 'Creating Account...' : 'Create Account'}
                 </Button>
               </form>
             </>

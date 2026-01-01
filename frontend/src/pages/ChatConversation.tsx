@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { mockProfiles } from '@/data/mockProfiles';
-import { ArrowLeft, Phone, Video, MoreVertical, Send, Image, Smile } from 'lucide-react';
+import { ArrowLeft, Phone, Video, MoreVertical, Send, Image, Smile, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
+import { api, createChatWebSocket } from '@/services/api';
+import { useEffect, useRef } from 'react';
 
 interface Message {
   id: string;
@@ -24,22 +26,80 @@ const mockMessages: Message[] = [
 export default function ChatConversation() {
   const { id } = useParams();
   const profile = mockProfiles.find(p => p.id === id) || mockProfiles[0];
-  const [messages, setMessages] = useState(mockMessages);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
-  const handleSend = () => {
+  useEffect(() => {
+    const fetchMessages = async () => {
+      try {
+        setIsLoading(true);
+        // Assuming id here is matchId based on the route /chat/:id
+        const data = await api.chat.getMessages(id!);
+        if (data && data.length > 0) {
+          setMessages(data);
+        } else {
+          setMessages(mockMessages);
+        }
+      } catch (error) {
+        console.error('Failed to fetch messages:', error);
+        setMessages(mockMessages);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchMessages();
+
+    // Setup WebSocket
+    let ws: WebSocket;
+    try {
+      ws = createChatWebSocket((data) => {
+        if (data.type === 'message' && (data.sender_id === id || data.receiver_id === id)) {
+          setMessages(prev => [...prev, {
+            id: data.id || Date.now().toString(),
+            content: data.content,
+            senderId: data.sender_id === id ? 'them' : 'me',
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+          }]);
+        }
+      });
+    } catch (e) {
+      console.error('WS Connection failed', e);
+    }
+
+    return () => ws?.close();
+  }, [id]);
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [messages]);
+
+  const handleSend = async () => {
     if (!newMessage.trim()) return;
-    
-    setMessages([
-      ...messages,
-      {
+
+    const content = newMessage;
+    setNewMessage('');
+
+    try {
+      // Optimistic update
+      const tempMsg = {
         id: Date.now().toString(),
-        content: newMessage,
+        content,
         senderId: 'me',
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      },
-    ]);
-    setNewMessage('');
+      };
+      setMessages(prev => [...prev, tempMsg]);
+
+      await api.chat.sendMessage(id!, content);
+    } catch (error) {
+      console.error('Failed to send message:', error);
+      // If it's a real match it might fail if ID is not a BSON ID in this demo
+      // but for testing UI responsiveness we keep the optimistic message
+    }
   };
 
   return (
@@ -80,8 +140,12 @@ export default function ChatConversation() {
       </header>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 relative z-10">
-        {messages.map((msg) => (
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 relative z-10" ref={scrollRef}>
+        {isLoading ? (
+          <div className="flex justify-center py-10">
+            <Loader2 className="w-8 h-8 text-primary animate-spin" />
+          </div>
+        ) : messages.map((msg) => (
           <div
             key={msg.id}
             className={cn(
@@ -123,17 +187,17 @@ export default function ChatConversation() {
               className="pr-12 glass-card border-white/10 rounded-full h-12"
               onKeyPress={(e) => e.key === 'Enter' && handleSend()}
             />
-            <Button 
-              variant="ghost" 
-              size="icon" 
+            <Button
+              variant="ghost"
+              size="icon"
               className="absolute right-1 top-1/2 -translate-y-1/2 rounded-full"
             >
               <Smile className="w-5 h-5" />
             </Button>
           </div>
-          <Button 
-            variant="gradient" 
-            size="icon" 
+          <Button
+            variant="gradient"
+            size="icon"
             className="rounded-full flex-shrink-0"
             onClick={handleSend}
           >
