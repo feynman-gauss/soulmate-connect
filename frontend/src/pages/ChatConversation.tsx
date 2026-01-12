@@ -15,61 +15,78 @@ interface Message {
   timestamp: string;
 }
 
-const mockMessages: Message[] = [
-  { id: '1', content: 'Hey! Nice to match with you 😊', senderId: 'them', timestamp: '10:30 AM' },
-  { id: '2', content: 'Hi! Thanks, I loved your profile!', senderId: 'me', timestamp: '10:31 AM' },
-  { id: '3', content: 'That\'s so sweet! What do you do for work?', senderId: 'them', timestamp: '10:32 AM' },
-  { id: '4', content: 'I\'m a software engineer. How about you?', senderId: 'me', timestamp: '10:33 AM' },
-  { id: '5', content: 'I work in marketing! Love the creative side of things', senderId: 'them', timestamp: '10:35 AM' },
-];
-
 export default function ChatConversation() {
-  const { id } = useParams();
-  const profile = mockProfiles.find(p => p.id === id) || mockProfiles[0];
-  const [messages, setMessages] = useState<Message[]>([]);
+  const { id } = useParams(); // id is the matchId
+  const [messages, setMessages] = useState<any[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [matchProfile, setMatchProfile] = useState<any>(null);
+  const [currentUserId, setCurrentUserId] = useState<string>('');
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const fetchMessages = async () => {
+    // Get current user ID from local storage
+    const userStr = localStorage.getItem('user');
+    if (userStr) {
+      try {
+        const user = JSON.parse(userStr);
+        setCurrentUserId(user.id);
+      } catch (e) {
+        console.error('Error parsing user from localstorage', e);
+      }
+    }
+
+    const loadData = async () => {
       try {
         setIsLoading(true);
-        // Assuming id here is matchId based on the route /chat/:id
-        const data = await api.chat.getMessages(id!);
-        if (data && data.length > 0) {
-          setMessages(data);
-        } else {
-          setMessages(mockMessages);
-        }
+        // 1. Fetch match details to get profile info
+        const matchData = await api.matches.getMatch(id!);
+        setMatchProfile(matchData.profile);
+
+        // 2. Fetch initial messages
+        const msgs = await api.chat.getMessages(id!);
+        // Backend returns [Newest, ..., Oldest] if we don't reverse in backend.
+        // Wait, backend api code says: .sort("created_at", -1) -> Newest first.
+        // THEN messages.reverse() -> Oldest first.
+        // So the API returns [Oldest, ..., Newest].
+        // So we SHOULD NOT reverse it here if we want [Oldest, ..., Newest]
+        setMessages(msgs);
+
+        // Correct order: Backend returns [Newest, ..., Oldest]
+        // We want to display [Oldest, ..., Newest] at the bottom
+        // So we reverse it.
       } catch (error) {
-        console.error('Failed to fetch messages:', error);
-        setMessages(mockMessages);
+        console.error('Failed to load chat data:', error);
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchMessages();
+    loadData();
 
-    // Setup WebSocket
+    // 3. Setup WebSocket
     let ws: WebSocket;
     try {
       ws = createChatWebSocket((data) => {
-        if (data.type === 'message' && (data.sender_id === id || data.receiver_id === id)) {
-          setMessages(prev => [...prev, {
-            id: data.id || Date.now().toString(),
-            content: data.content,
-            senderId: data.sender_id === id ? 'them' : 'me',
-            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-          }]);
+        // Handle incoming WebSocket messages
+        if (data.type === 'message.new' && data.match_id === id) {
+          // Standardize format
+          const incomingMsg = {
+            id: Date.now().toString(), // or data.message.id if available
+            content: data.message,
+            sender_id: data.sender_id,
+            created_at: new Date().toISOString()
+          };
+          setMessages(prev => [...prev, incomingMsg]);
         }
       });
     } catch (e) {
       console.error('WS Connection failed', e);
     }
 
-    return () => ws?.close();
+    return () => {
+      if (ws) ws.close();
+    };
   }, [id]);
 
   useEffect(() => {
@@ -84,23 +101,34 @@ export default function ChatConversation() {
     const content = newMessage;
     setNewMessage('');
 
-    try {
-      // Optimistic update
-      const tempMsg = {
-        id: Date.now().toString(),
-        content,
-        senderId: 'me',
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      };
-      setMessages(prev => [...prev, tempMsg]);
+    // Optimistic update
+    const tempMsg = {
+      id: Date.now().toString(),
+      content,
+      sender_id: currentUserId, // Use actual current user ID
+      created_at: new Date().toISOString(),
+      isOptimistic: true
+    };
 
+    setMessages(prev => [...prev, tempMsg]);
+
+    try {
       await api.chat.sendMessage(id!, content);
+      // Could replace optimistic message with real one here if needed
     } catch (error) {
       console.error('Failed to send message:', error);
-      // If it's a real match it might fail if ID is not a BSON ID in this demo
-      // but for testing UI responsiveness we keep the optimistic message
+      // Remove optimistic message on failure
+      setMessages(prev => prev.filter(m => m.id !== tempMsg.id));
     }
   };
+
+  if (!matchProfile && isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="w-8 h-8 text-primary animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -118,12 +146,12 @@ export default function ChatConversation() {
           </Button>
         </Link>
         <img
-          src={profile.photos[0]}
-          alt={profile.name}
+          src={matchProfile?.photos?.[0] || 'https://via.placeholder.com/150'}
+          alt={matchProfile?.name || 'User'}
           className="w-10 h-10 rounded-full object-cover ring-2 ring-primary/30"
         />
         <div className="flex-1">
-          <h2 className="font-semibold text-foreground">{profile.name}</h2>
+          <h2 className="font-semibold text-foreground">{matchProfile?.name || 'Loading...'}</h2>
           <p className="text-xs text-green-500">Online</p>
         </div>
         <div className="flex gap-2">
@@ -150,13 +178,13 @@ export default function ChatConversation() {
             key={msg.id}
             className={cn(
               "flex",
-              msg.senderId === 'me' ? "justify-end" : "justify-start"
+              msg.sender_id === currentUserId ? "justify-end" : "justify-start"
             )}
           >
             <div
               className={cn(
                 "max-w-[75%] rounded-2xl px-4 py-3",
-                msg.senderId === 'me'
+                msg.sender_id === currentUserId
                   ? "bg-gradient-primary text-white rounded-br-sm"
                   : "glass-card rounded-bl-sm"
               )}
@@ -164,9 +192,9 @@ export default function ChatConversation() {
               <p className="text-sm">{msg.content}</p>
               <p className={cn(
                 "text-[10px] mt-1",
-                msg.senderId === 'me' ? "text-white/70" : "text-muted-foreground"
+                msg.sender_id === currentUserId ? "text-white/70" : "text-muted-foreground"
               )}>
-                {msg.timestamp}
+                {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
               </p>
             </div>
           </div>

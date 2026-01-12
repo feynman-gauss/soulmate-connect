@@ -1,40 +1,71 @@
+import { useState, useEffect } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Settings, 
-  Edit2, 
-  MapPin, 
-  GraduationCap, 
-  Briefcase, 
+import {
+  Settings,
+  Edit2,
+  MapPin,
+  GraduationCap,
+  Briefcase,
   Heart,
   Camera,
   Crown,
   Shield,
   LogOut
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
-
-const currentUser = {
-  name: 'Vikram Singh',
-  age: 28,
-  location: 'Mumbai, Maharashtra',
-  religion: 'Hindu',
-  education: 'MBA',
-  occupation: 'Product Manager',
-  height: "5'10\"",
-  about: 'A tech enthusiast with a passion for building products that matter. Love traveling, photography, and good conversations over coffee.',
-  photos: [
-    'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400',
-    'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400',
-  ],
-  interests: ['Technology', 'Travel', 'Photography', 'Coffee', 'Fitness'],
-  verified: true,
-  premium: false,
-  profileCompletion: 85,
-};
+import { Link, useNavigate } from 'react-router-dom';
+import { api } from '@/services/api';
+import { toast } from 'sonner';
 
 export default function Profile() {
+  const navigate = useNavigate();
+  const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const data = await api.profiles.getMyProfile();
+        setUser({
+          ...data,
+          // Default fallbacks for missing fields until backend provides them
+          location: data.location?.city || 'Location not set',
+          education: data.education || 'Education not set',
+          occupation: data.occupation || 'Occupation not set',
+          about: data.about || 'Tell us about yourself...',
+          interests: data.interests || [],
+          photos: data.photos?.length ? data.photos : ['https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400'],
+          profileCompletion: data.profile_completion || 30
+        });
+      } catch (error) {
+        toast.error('Failed to load profile');
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfile();
+  }, []);
+
+  const handleLogout = () => {
+    api.auth.logout();
+    navigate('/');
+  };
+
+  if (loading) {
+    return (
+      <AppLayout>
+        <div className="flex items-center justify-center h-full">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      </AppLayout>
+    );
+  }
+
+  if (!user) return null;
+
   return (
     <AppLayout>
       <div className="px-4 py-6">
@@ -53,8 +84,8 @@ export default function Profile() {
             <div className="absolute -bottom-12 left-1/2 -translate-x-1/2">
               <div className="relative">
                 <img
-                  src={currentUser.photos[0]}
-                  alt={currentUser.name}
+                  src={user.photos[0]}
+                  alt={user.name}
                   className="w-24 h-24 rounded-full object-cover ring-4 ring-background"
                 />
                 <button className="absolute bottom-0 right-0 w-8 h-8 bg-primary rounded-full flex items-center justify-center ring-2 ring-background">
@@ -67,14 +98,14 @@ export default function Profile() {
           {/* Info */}
           <div className="pt-14 pb-6 px-6 text-center">
             <div className="flex items-center justify-center gap-2 mb-1">
-              <h2 className="text-xl font-display font-bold">{currentUser.name}, {currentUser.age}</h2>
-              {currentUser.verified && (
+              <h2 className="text-xl font-display font-bold">{user.name}, {user.age}</h2>
+              {user.verified && (
                 <Shield className="w-5 h-5 text-blue-500" />
               )}
             </div>
             <div className="flex items-center justify-center gap-1 text-muted-foreground text-sm">
               <MapPin className="w-4 h-4" />
-              <span>{currentUser.location}</span>
+              <span>{user.location}</span>
             </div>
           </div>
         </div>
@@ -83,21 +114,23 @@ export default function Profile() {
         <div className="glass-card rounded-2xl p-4 mb-6">
           <div className="flex items-center justify-between mb-3">
             <span className="text-sm font-medium">Profile Completion</span>
-            <span className="text-sm font-bold text-primary">{currentUser.profileCompletion}%</span>
+            <span className="text-sm font-bold text-primary">{user.profileCompletion}%</span>
           </div>
           <div className="h-2 bg-secondary rounded-full overflow-hidden">
-            <div 
+            <div
               className="h-full bg-gradient-primary rounded-full transition-all"
-              style={{ width: `${currentUser.profileCompletion}%` }}
+              style={{ width: `${user.profileCompletion}%` }}
             />
           </div>
           <p className="text-xs text-muted-foreground mt-2">
-            Complete your profile to get more matches!
+            {user.profileCompletion < 100
+              ? "Complete your profile to get more matches!"
+              : "Great job! Your profile is complete."}
           </p>
         </div>
 
         {/* Premium Banner */}
-        {!currentUser.premium && (
+        {!user.premium && (
           <div className="glass-card rounded-2xl p-4 mb-6 gradient-border overflow-hidden">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-xl bg-gradient-primary flex items-center justify-center flex-shrink-0">
@@ -122,7 +155,7 @@ export default function Profile() {
               <Edit2 className="w-4 h-4" />
             </Button>
           </div>
-          <p className="text-sm text-muted-foreground">{currentUser.about}</p>
+          <p className="text-sm text-muted-foreground">{user.about}</p>
         </div>
 
         {/* Details */}
@@ -131,15 +164,15 @@ export default function Profile() {
           <div className="space-y-3">
             <div className="flex items-center gap-3">
               <GraduationCap className="w-5 h-5 text-primary" />
-              <span className="text-sm">{currentUser.education}</span>
+              <span className="text-sm">{user.education}</span>
             </div>
             <div className="flex items-center gap-3">
               <Briefcase className="w-5 h-5 text-primary" />
-              <span className="text-sm">{currentUser.occupation}</span>
+              <span className="text-sm">{user.occupation}</span>
             </div>
             <div className="flex items-center gap-3">
               <Heart className="w-5 h-5 text-primary" />
-              <span className="text-sm">{currentUser.religion}</span>
+              <span className="text-sm">{user.religion || 'Religion not set'}</span>
             </div>
           </div>
         </div>
@@ -153,21 +186,23 @@ export default function Profile() {
             </Button>
           </div>
           <div className="flex flex-wrap gap-2">
-            {currentUser.interests.map((interest) => (
-              <Badge key={interest} className="bg-primary/20 text-primary border-0">
-                {interest}
-              </Badge>
-            ))}
+            {user.interests.length > 0 ? (
+              user.interests.map((interest: string) => (
+                <Badge key={interest} className="bg-primary/20 text-primary border-0">
+                  {interest}
+                </Badge>
+              ))
+            ) : (
+              <span className="text-sm text-muted-foreground">No interests added yet</span>
+            )}
           </div>
         </div>
 
         {/* Logout */}
-        <Link to="/">
-          <Button variant="outline" className="w-full gap-2">
-            <LogOut className="w-4 h-4" />
-            Log Out
-          </Button>
-        </Link>
+        <Button variant="outline" className="w-full gap-2" onClick={handleLogout}>
+          <LogOut className="w-4 h-4" />
+          Log Out
+        </Button>
       </div>
     </AppLayout>
   );

@@ -177,6 +177,7 @@ async def send_message(
     # Create notification for receiver
     receiver = await db.users.find_one({"_id": receiver_id})
     if receiver:
+        # Create persistent notification
         await db.notifications.insert_one({
             "user_id": receiver_id,
             "type": "new_message",
@@ -189,6 +190,16 @@ async def send_message(
             "read": False,
             "created_at": datetime.utcnow()
         })
+        
+        # Send real-time update via WebSocket
+        from app.websockets.chat import manager
+        await manager.send_personal_message({
+            "type": "message.new",
+            "message": message_data.content,
+            "sender_id": str(current_user["_id"]),
+            "match_id": match_id,
+            "created_at": datetime.utcnow().isoformat()
+        }, str(receiver_id))
     
     return {
         "id": str(message_doc["_id"]),

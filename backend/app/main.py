@@ -93,6 +93,10 @@ app.include_router(chat.router, prefix="/api/v1")
 app.include_router(search.router, prefix="/api/v1")
 app.include_router(notifications.router, prefix="/api/v1")
 
+# WebSockets
+from app.websockets.chat import websocket_endpoint
+app.add_api_websocket_route("/ws/chat", websocket_endpoint)
+
 
 from fastapi.responses import JSONResponse
 

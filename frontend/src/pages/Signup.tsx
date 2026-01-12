@@ -162,6 +162,9 @@ export default function Signup() {
                       )}
                     </button>
                   </div>
+                  <p className="text-xs text-muted-foreground ml-1">
+                    Must be at least 8 characters, include a number and a letter.
+                  </p>
                 </div>
 
                 <Button type="submit" variant="gradient" className="w-full" size="lg">
