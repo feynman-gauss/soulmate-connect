@@ -1,0 +1,114 @@
+{
+  "folders": [
+    {
+      "name": "🏠 Root",
+      "path": "."
+    },
+    {
+      "name": "🐍 Backend (FastAPI)",
+      "path": "backend"
+    },
+    {
+      "name": "⚛️ Frontend (React)",
+      "path": "frontend"
+    }
+  ],
+  "settings": {
+    // Inherit all settings from .vscode/settings.json
+    "files.autoSave": "onFocusChange",
+    "editor.formatOnSave": true,
+    
+    // Terminal
+    "terminal.integrated.cwd": "${workspaceFolder}",
+    
+    // Multi-root workspace specific
+    "search.quickOpen.includeSymbols": true,
+    "search.quickOpen.includeHistory": true,
+    
+    // Exclude patterns for search in multi-root
+    "search.exclude": {
+      "**/node_modules": true,
+      "**/dist": true,
+      "**/build": true,
+      "**/.venv": true,
+      "**/__pycache__": true,
+      "**/*.pyc": true,
+      "**/uploads": true,
+      "**/.git": true
+    }
+  },
+  "extensions": {
+    "recommendations": [
+      "ms-python.python",
+      "ms-python.vscode-pylance",
+      "ms-python.black-formatter",
+      "dbaeumer.vscode-eslint",
+      "esbenp.prettier-vscode",
+      "bradlc.vscode-tailwindcss",
+      "dsznajder.es7-react-js-snippets",
+      "mongodb.mongodb-vscode",
+      "cweijan.vscode-redis-client",
+      "ms-azuretools.vscode-docker",
+      "eamodio.gitlens"
+    ]
+  },
+  "launch": {
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "name": "🚀 Full Stack",
+        "type": "debugpy",
+        "request": "launch",
+        "module": "uvicorn",
+        "args": [
+          "app.main:app",
+          "--host",
+          "0.0.0.0",
+          "--port",
+          "8000",
+          "--reload"
+        ],
+        "cwd": "${workspaceFolder:🐍 Backend (FastAPI)}",
+        "env": {
+          "PYTHONPATH": "${workspaceFolder:🐍 Backend (FastAPI)}"
+        },
+        "envFile": "${workspaceFolder:🐍 Backend (FastAPI)}/.env",
+        "console": "integratedTerminal",
+        "justMyCode": true,
+        "preLaunchTask": "npm: dev (frontend)"
+      }
+    ]
+  },
+  "tasks": {
+    "version": "2.0.0",
+    "tasks": [
+      {
+        "label": "🚀 Start Full Stack",
+        "dependsOn": [
+          "Backend Server",
+          "Frontend Dev Server"
+        ],
+        "dependsOrder": "parallel",
+        "problemMatcher": []
+      },
+      {
+        "label": "Backend Server",
+        "type": "shell",
+        "command": "python -m uvicorn app.main:app --reload",
+        "options": {
+          "cwd": "${workspaceFolder:🐍 Backend (FastAPI)}"
+        },
+        "isBackground": true,
+        "problemMatcher": []
+      },
+      {
+        "label": "Frontend Dev Server",
+        "type": "npm",
+        "script": "dev",
+        "path": "frontend/",
+        "isBackground": true,
+        "problemMatcher": []
+      }
+    ]
+  }
+}

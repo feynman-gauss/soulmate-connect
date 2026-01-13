@@ -1,0 +1,75 @@
+{
+  "recommendations": [
+    // Python Development
+    "ms-python.python",
+    "ms-python.vscode-pylance",
+    "ms-python.black-formatter",
+    "ms-python.isort",
+    "ms-python.flake8",
+    
+    // JavaScript/TypeScript Development
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    
+    // React Development
+    "dsznajder.es7-react-js-snippets",
+    "burkeholland.simple-react-snippets",
+    
+    // Tailwind CSS
+    "bradlc.vscode-tailwindcss",
+    
+    // MongoDB
+    "mongodb.mongodb-vscode",
+    
+    // Redis
+    "cweijan.vscode-redis-client",
+    
+    // Docker
+    "ms-azuretools.vscode-docker",
+    
+    // REST Client
+    "humao.rest-client",
+    
+    // Git
+    "eamodio.gitlens",
+    "mhutchie.git-graph",
+    
+    // Code Quality
+    "streetsidesoftware.code-spell-checker",
+    "usernamehw.errorlens",
+    
+    // Productivity
+    "aaron-bond.better-comments",
+    "wayou.vscode-todo-highlight",
+    "gruntfuggly.todo-tree",
+    
+    // File Icons
+    "pkief.material-icon-theme",
+    
+    // Themes (optional)
+    "github.github-vscode-theme",
+    
+    // Markdown
+    "yzhang.markdown-all-in-one",
+    "davidanson.vscode-markdownlint",
+    
+    // YAML
+    "redhat.vscode-yaml",
+    
+    // Environment Variables
+    "mikestead.dotenv",
+    
+    // Path Intellisense
+    "christian-kohler.path-intellisense",
+    
+    // Auto Rename Tag
+    "formulahendry.auto-rename-tag",
+    
+    // Bracket Pair Colorizer (built-in now, but keeping for older versions)
+    "2gua.rainbow-brackets",
+    
+    // Import Cost
+    "wix.vscode-import-cost"
+  ],
+  "unwantedRecommendations": []
+}
