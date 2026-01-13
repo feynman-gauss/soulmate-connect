@@ -74,8 +74,7 @@
         },
         "envFile": "${workspaceFolder:🐍 Backend (FastAPI)}/.env",
         "console": "integratedTerminal",
-        "justMyCode": true,
-        "preLaunchTask": "npm: dev (frontend)"
+        "justMyCode": true
       }
     ]
   },
@@ -85,14 +84,14 @@
       {
         "label": "🚀 Start Full Stack",
         "dependsOn": [
-          "Backend Server",
-          "Frontend Dev Server"
+          "Backend: Start Development Server",
+          "Frontend: Start Development Server"
         ],
         "dependsOrder": "parallel",
         "problemMatcher": []
       },
       {
-        "label": "Backend Server",
+        "label": "Backend: Start Development Server",
         "type": "shell",
         "command": "python -m uvicorn app.main:app --reload",
         "options": {
@@ -102,7 +101,7 @@
         "problemMatcher": []
       },
       {
-        "label": "Frontend Dev Server",
+        "label": "Frontend: Start Development Server",
         "type": "npm",
         "script": "dev",
         "path": "frontend/",
