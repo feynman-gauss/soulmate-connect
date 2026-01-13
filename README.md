@@ -6,6 +6,7 @@
 1. **[SETUP_GUIDE.md](SETUP_GUIDE.md)** - Complete setup instructions
 2. **[BEFORE_AFTER.md](BEFORE_AFTER.md)** - Detailed problem & solution analysis
 3. **[start.bat](start.bat)** - One-click startup script for Windows
+4. **[.vscode/README.md](.vscode/README.md)** - 🆕 VS Code workspace setup & usage guide
 
 ### 📋 Integration Docs
 4. **[INTEGRATION.md](INTEGRATION.md)** - Frontend-Backend integration details
@@ -50,6 +51,15 @@
 - IPO investment memo (JP Morgan style)
 - Complete API reference
 
+### ✅ VS Code Integration (NEW!)
+- Complete workspace configuration with debug support
+- Python (Black, Flake8) and TypeScript (ESLint, Prettier) settings
+- 40+ recommended extensions for full-stack development
+- Pre-configured launch configurations for debugging
+- Common development tasks (start servers, run tests, lint, format)
+- Multi-root workspace support for backend/frontend
+- See [.vscode/README.md](.vscode/README.md) for full guide
+
 ---
 
 ## Directory Structure
@@ -61,6 +71,15 @@ soulmate-connect/
 │   ├── BEFORE_AFTER.md             ← Problem & solution
 │   ├── INTEGRATION.md              ← API integration
 │   └── start.bat                   ← Launch script
+│
+├── 💻 VS Code Configuration (NEW!)
+│   ├── .vscode/
+│   │   ├── README.md               ← VS Code setup guide
+│   │   ├── settings.json           ← Editor settings
+│   │   ├── extensions.json         ← Recommended extensions
+│   │   ├── launch.json             ← Debug configurations
+│   │   └── tasks.json              ← Development tasks
+│   └── soulmate-connect.code-workspace  ← Multi-root workspace
 │
 ├── backend/                         (FastAPI application)
 │   ├── app/
@@ -199,17 +218,26 @@ from app.websockets import manager, websocket_endpoint
 - [x] IPO memos created (3 documents)
 - [x] Setup guide complete
 - [x] Startup script created
+- [x] VS Code workspace configured (NEW!)
 
 ---
 
 ## Running the Application
 
-### 1. Quick Start (Windows)
+### 1. Quick Start with VS Code (Recommended) 🆕
+```bash
+# Open the workspace file
+code soulmate-connect.code-workspace
+
+# Then press F5 or Ctrl+Shift+P → "Run Task" → "Start Full Stack Development"
+```
+
+### 2. Quick Start (Windows)
 ```bash
 start.bat
 ```
 
-### 2. Manual Start
+### 3. Manual Start
 **Terminal 1**:
 ```bash
 cd backend
@@ -222,7 +250,7 @@ cd frontend
 npm run dev
 ```
 
-### 3. Verify First
+### 4. Verify First
 ```bash
 cd backend
 python test_startup.py
@@ -232,6 +260,7 @@ python test_startup.py
 
 ## Support & Resources
 
+- **VS Code Setup**: See [.vscode/README.md](.vscode/README.md) 🆕
 - **Backend Docs**: http://localhost:8000/api/docs (when running)
 - **Frontend App**: http://localhost:5173 (when running)
 - **Investment Docs**: See ipo-memo/ folder
@@ -249,19 +278,21 @@ python test_startup.py
 | Import System | ✅ Fixed | Jan 3, 2026 |
 | Documentation | ✅ Complete | Jan 3, 2026 |
 | IPO Memos | ✅ Complete | Jan 3, 2026 |
-| Ready to Deploy | ✅ Yes | Jan 3, 2026 |
+| VS Code Workspace | ✅ Complete | Jan 13, 2026 |
+| Ready to Deploy | ✅ Yes | Jan 13, 2026 |
 
 ---
 
 ## Next Actions
 
-1. **Start the application**: `start.bat`
-2. **Test authentication**: Register → Login
-3. **Test features**: Discover → Matches → Chat
-4. **Monitor logs**: Check both backend/frontend terminals
-5. **Deploy to production**: Follow SETUP_GUIDE.md deployment section
+1. **Open in VS Code**: `code soulmate-connect.code-workspace` 🆕
+2. **Start the application**: Press F5 or use `start.bat`
+3. **Test authentication**: Register → Login
+4. **Test features**: Discover → Matches → Chat
+5. **Monitor logs**: Check both backend/frontend terminals
+6. **Deploy to production**: Follow SETUP_GUIDE.md deployment section
 
 ---
-*Complete documentation as of January 3, 2026*
-*All issues resolved and application ready for deployment*
+*Complete documentation as of January 13, 2026*
+*All issues resolved, VS Code workspace configured, and application ready for deployment*
 
