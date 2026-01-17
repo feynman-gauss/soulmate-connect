@@ -18,7 +18,7 @@ export default function Signup() {
     phone: '',
     password: '',
     gender: 'male',
-    lookingFor: 'female',
+    lookingFor: 'woman',
   });
   const [isLoading, setIsLoading] = useState(false);
 

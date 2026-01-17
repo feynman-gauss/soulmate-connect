@@ -1,5 +1,26 @@
 // API Configuration and Service
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
+// Dynamically determine API URL based on environment and current hostname
+const getApiBaseUrl = (): string => {
+    // If explicitly set via environment variable, use that
+    if (import.meta.env.VITE_API_URL) {
+        return import.meta.env.VITE_API_URL;
+    }
+
+    // In production or when accessing from other devices, use relative URL or same hostname
+    const { hostname, protocol } = window.location;
+
+    // If accessing from localhost, use localhost backend
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+        return 'http://localhost:8000/api/v1';
+    }
+
+    // For cloud deployments or other devices on the network:
+    // - If VITE_API_URL is set in production build, it will be used above
+    // - Otherwise, assume backend is on port 8000 of the same host
+    return `${protocol}//${hostname}:8000/api/v1`;
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 // Helper function to get auth token
 const getAuthToken = () => {
