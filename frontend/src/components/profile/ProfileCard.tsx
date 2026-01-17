@@ -4,6 +4,20 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
+import { getProfilePhoto } from '@/utils/profileUtils';
+
+// Helper to get location string from location object or string
+const getLocationString = (location: any): string => {
+  if (!location) return 'India';
+  if (typeof location === 'string') return location;
+  if (typeof location === 'object') {
+    const parts = [];
+    if (location.city) parts.push(location.city);
+    if (location.state) parts.push(location.state);
+    return parts.length > 0 ? parts.join(', ') : 'India';
+  }
+  return 'India';
+};
 
 interface ProfileCardProps {
   profile: UserProfile;
@@ -21,7 +35,7 @@ export function ProfileCard({ profile, onLike, onPass, onSuperLike, className }:
     const rect = e.currentTarget.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const isRightSide = x > rect.width / 2;
-    
+
     if (isRightSide && currentPhotoIndex < profile.photos.length - 1) {
       setCurrentPhotoIndex(prev => prev + 1);
     } else if (!isRightSide && currentPhotoIndex > 0) {
@@ -35,19 +49,19 @@ export function ProfileCard({ profile, onLike, onPass, onSuperLike, className }:
       className
     )}>
       {/* Photo Section */}
-      <div 
+      <div
         className="relative aspect-[3/4] cursor-pointer"
         onClick={handlePhotoTap}
       >
         <img
-          src={profile.photos[currentPhotoIndex]}
+          src={profile.photos?.[currentPhotoIndex] || getProfilePhoto(profile.photos, profile.gender)}
           alt={profile.name}
           className="w-full h-full object-cover"
         />
-        
+
         {/* Photo indicators */}
         <div className="absolute top-4 left-4 right-4 flex gap-1">
-          {profile.photos.map((_, idx) => (
+          {(profile.photos && profile.photos.length > 0) && profile.photos.map((_, idx) => (
             <div
               key={idx}
               className={cn(
@@ -82,12 +96,20 @@ export function ProfileCard({ profile, onLike, onPass, onSuperLike, className }:
               <h2 className="text-2xl font-display font-bold text-white">
                 {profile.name}, {profile.age}
               </h2>
+              {/* Tyagi Community Identifiers */}
+              {(profile.gotra || profile.native_village) && (
+                <div className="flex items-center gap-2 text-primary/90 mt-1 text-sm font-medium">
+                  {profile.gotra && <span>{profile.gotra} Gotra</span>}
+                  {profile.gotra && profile.native_village && <span>•</span>}
+                  {profile.native_village && <span>{profile.native_village}</span>}
+                </div>
+              )}
               <div className="flex items-center gap-2 text-white/80 mt-1">
                 <MapPin className="w-4 h-4" />
-                <span className="text-sm">{profile.location}</span>
+                <span className="text-sm">{getLocationString(profile.location)}</span>
               </div>
             </div>
-            <button 
+            <button
               onClick={(e) => {
                 e.stopPropagation();
                 setIsExpanded(!isExpanded);
@@ -119,6 +141,16 @@ export function ProfileCard({ profile, onLike, onPass, onSuperLike, className }:
             <Badge variant="secondary" className="glass-card border-white/10">
               {profile.religion}
             </Badge>
+            {profile.manglik_status && (
+              <Badge variant="secondary" className="glass-card border-white/10">
+                Manglik: {profile.manglik_status === 'dont_know' ? "Don't Know" : profile.manglik_status.charAt(0).toUpperCase() + profile.manglik_status.slice(1)}
+              </Badge>
+            )}
+            {profile.sub_caste && (
+              <Badge variant="secondary" className="glass-card border-white/10">
+                {profile.sub_caste}
+              </Badge>
+            )}
           </div>
 
           {/* About */}
@@ -126,17 +158,45 @@ export function ProfileCard({ profile, onLike, onPass, onSuperLike, className }:
             {profile.about}
           </p>
 
-          {/* Interests */}
-          <div>
-            <h4 className="text-sm font-semibold mb-2 text-foreground/80">Interests</h4>
-            <div className="flex flex-wrap gap-2">
-              {profile.interests.map((interest) => (
-                <Badge key={interest} className="bg-primary/20 text-primary border-0">
-                  {interest}
-                </Badge>
-              ))}
+          {/* Family Details (Tyagi Specific) */}
+          {profile.family_details && (profile.family_details.father_name || profile.family_details.mother_name) && (
+            <div className="glass-card border-white/10 rounded-xl p-3">
+              <h4 className="text-sm font-semibold mb-2 text-foreground/80">Family Background</h4>
+              <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
+                {profile.family_details.father_name && (
+                  <div>
+                    <span className="text-foreground/70">Father:</span> {profile.family_details.father_name}
+                    {profile.family_details.father_occupation && ` (${profile.family_details.father_occupation})`}
+                  </div>
+                )}
+                {profile.family_details.mother_name && (
+                  <div>
+                    <span className="text-foreground/70">Mother:</span> {profile.family_details.mother_name}
+                    {profile.family_details.mother_occupation && ` (${profile.family_details.mother_occupation})`}
+                  </div>
+                )}
+                {profile.family_details.family_type && (
+                  <div>
+                    <span className="text-foreground/70">Family:</span> {profile.family_details.family_type.charAt(0).toUpperCase() + profile.family_details.family_type.slice(1)}
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
+          )}
+
+          {/* Interests */}
+          {profile.interests && profile.interests.length > 0 && (
+            <div>
+              <h4 className="text-sm font-semibold mb-2 text-foreground/80">Interests</h4>
+              <div className="flex flex-wrap gap-2">
+                {profile.interests.map((interest) => (
+                  <Badge key={interest} className="bg-primary/20 text-primary border-0">
+                    {interest}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -150,7 +210,7 @@ export function ProfileCard({ profile, onLike, onPass, onSuperLike, className }:
         >
           <X className="w-6 h-6" />
         </Button>
-        
+
         <Button
           variant="gradient"
           size="icon"
@@ -159,7 +219,7 @@ export function ProfileCard({ profile, onLike, onPass, onSuperLike, className }:
         >
           <Star className="w-5 h-5" />
         </Button>
-        
+
         <Button
           variant="icon"
           size="icon"

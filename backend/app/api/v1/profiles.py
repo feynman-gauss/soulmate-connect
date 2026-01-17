@@ -156,7 +156,8 @@ async def upload_photo(
     current_user: dict = Depends(get_current_user),
     db: AsyncIOMotorDatabase = Depends(get_database)
 ):
-    """Upload a profile photo"""
+    """Upload a profile photo - stores as base64 in database"""
+    import base64
     
     # Check file extension
     file_ext = file.filename.split(".")[-1].lower()
@@ -185,29 +186,37 @@ async def upload_photo(
             detail=f"Maximum {settings.MAX_PHOTOS_PER_PROFILE} photos allowed"
         )
     
-    # Create upload directory if not exists
-    upload_dir = Path(settings.UPLOAD_DIR) / "profiles" / str(current_user["_id"])
-    upload_dir.mkdir(parents=True, exist_ok=True)
+    # Read file content and convert to base64 data URL
+    content = await file.read()
+    base64_content = base64.b64encode(content).decode('utf-8')
     
-    # Generate unique filename
-    filename = f"{uuid.uuid4()}.{file_ext}"
-    file_path = upload_dir / filename
+    # Determine MIME type
+    mime_types = {
+        'jpg': 'image/jpeg',
+        'jpeg': 'image/jpeg',
+        'png': 'image/png',
+        'gif': 'image/gif',
+        'webp': 'image/webp'
+    }
+    mime_type = mime_types.get(file_ext, 'image/jpeg')
     
-    # Save file
-    with open(file_path, "wb") as f:
-        content = await file.read()
-        f.write(content)
+    # Create data URL
+    photo_data_url = f"data:{mime_type};base64,{base64_content}"
     
-    # Store relative path in database
-    photo_url = f"/uploads/profiles/{current_user['_id']}/{filename}"
-    
-    # Update user photos
+    # Update user photos in database
     await db.users.update_one(
         {"_id": current_user["_id"]},
-        {"$push": {"photos": photo_url}}
+        {"$push": {"photos": photo_data_url}}
     )
     
-    return {"photo_url": photo_url, "message": "Photo uploaded successfully"}
+    # Get updated user to return all photos
+    updated_user = await db.users.find_one({"_id": current_user["_id"]})
+    
+    return {
+        "photo_url": photo_data_url, 
+        "photos": updated_user.get("photos", []),
+        "message": "Photo uploaded successfully"
+    }
 
 
 @router.delete("/photos/{photo_index}")

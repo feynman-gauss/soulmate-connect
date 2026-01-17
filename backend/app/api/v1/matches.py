@@ -5,6 +5,7 @@ from app.schemas.match import MatchResponse, MatchListResponse
 from app.utils.security import get_current_user
 from bson import ObjectId
 from typing import List
+from datetime import datetime
 
 router = APIRouter(prefix="/matches", tags=["Matches"])
 
@@ -17,6 +18,195 @@ def serialize_user(user: dict) -> dict:
         del user["password_hash"]
     return user
 
+
+# ============================================
+# MATCH REQUESTS - Must be BEFORE /{match_id}
+# ============================================
+
+@router.get("/requests")
+async def get_received_requests(
+    current_user: dict = Depends(get_current_user),
+    db: AsyncIOMotorDatabase = Depends(get_database)
+):
+    """Get pending match requests received by current user"""
+    
+    requests = await db.match_requests.find({
+        "to_user_id": current_user["_id"],
+        "status": "pending"
+    }).sort("created_at", -1).to_list(length=None)
+    
+    result = []
+    for req in requests:
+        # Get sender's profile
+        sender = await db.users.find_one({"_id": req["from_user_id"]})
+        if sender:
+            result.append({
+                "id": str(req["_id"]),
+                "from_user_id": str(req["from_user_id"]),
+                "to_user_id": str(req["to_user_id"]),
+                "status": req["status"],
+                "created_at": req["created_at"],
+                "profile": serialize_user(sender)
+            })
+    
+    return result
+
+
+@router.get("/requests/sent")
+async def get_sent_requests(
+    current_user: dict = Depends(get_current_user),
+    db: AsyncIOMotorDatabase = Depends(get_database)
+):
+    """Get match requests sent by current user"""
+    
+    requests = await db.match_requests.find({
+        "from_user_id": current_user["_id"]
+    }).sort("created_at", -1).to_list(length=None)
+    
+    result = []
+    for req in requests:
+        # Get recipient's profile
+        recipient = await db.users.find_one({"_id": req["to_user_id"]})
+        if recipient:
+            result.append({
+                "id": str(req["_id"]),
+                "from_user_id": str(req["from_user_id"]),
+                "to_user_id": str(req["to_user_id"]),
+                "status": req["status"],
+                "created_at": req["created_at"],
+                "profile": serialize_user(recipient)
+            })
+    
+    return result
+
+
+@router.post("/requests/{request_id}/accept")
+async def accept_request(
+    request_id: str,
+    current_user: dict = Depends(get_current_user),
+    db: AsyncIOMotorDatabase = Depends(get_database)
+):
+    """Accept a match request"""
+    
+    try:
+        request = await db.match_requests.find_one({"_id": ObjectId(request_id)})
+    except:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid request ID"
+        )
+    
+    if not request:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Request not found"
+        )
+    
+    # Verify current user is the recipient
+    if request["to_user_id"] != current_user["_id"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to accept this request"
+        )
+    
+    if request["status"] != "pending":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Request is no longer pending"
+        )
+    
+    # Update request status
+    await db.match_requests.update_one(
+        {"_id": ObjectId(request_id)},
+        {"$set": {"status": "accepted", "resolved_at": datetime.utcnow()}}
+    )
+    
+    # Create match
+    match_doc = {
+        "user1_id": request["from_user_id"],
+        "user2_id": current_user["_id"],
+        "matched_at": datetime.utcnow(),
+        "is_active": True,
+        "unread_count_user1": 0,
+        "unread_count_user2": 0
+    }
+    await db.matches.insert_one(match_doc)
+    
+    # Get sender info for notifications
+    sender = await db.users.find_one({"_id": request["from_user_id"]})
+    
+    # Notify both users
+    await db.notifications.insert_many([
+        {
+            "user_id": current_user["_id"],
+            "type": "new_match",
+            "title": "New Match! 💕",
+            "message": f"You and {sender['name']} are now matched!",
+            "data": {"match_user_id": str(sender["_id"])},
+            "read": False,
+            "created_at": datetime.utcnow()
+        },
+        {
+            "user_id": sender["_id"],
+            "type": "request_accepted",
+            "title": "Interest Accepted! 🎉",
+            "message": f"{current_user['name']} accepted your interest!",
+            "data": {"match_user_id": str(current_user["_id"])},
+            "read": False,
+            "created_at": datetime.utcnow()
+        }
+    ])
+    
+    return {"message": "Request accepted! You are now matched."}
+
+
+@router.post("/requests/{request_id}/reject")
+async def reject_request(
+    request_id: str,
+    current_user: dict = Depends(get_current_user),
+    db: AsyncIOMotorDatabase = Depends(get_database)
+):
+    """Reject a match request"""
+    
+    try:
+        request = await db.match_requests.find_one({"_id": ObjectId(request_id)})
+    except:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid request ID"
+        )
+    
+    if not request:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Request not found"
+        )
+    
+    # Verify current user is the recipient
+    if request["to_user_id"] != current_user["_id"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to reject this request"
+        )
+    
+    if request["status"] != "pending":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Request is no longer pending"
+        )
+    
+    # Update request status
+    await db.match_requests.update_one(
+        {"_id": ObjectId(request_id)},
+        {"$set": {"status": "rejected", "resolved_at": datetime.utcnow()}}
+    )
+    
+    return {"message": "Request declined"}
+
+
+# ============================================
+# MAIN MATCH ROUTES
+# ============================================
 
 @router.get("", response_model=List[MatchResponse])
 async def get_matches(

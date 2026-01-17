@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { Heart, Sparkles, Shield, Users } from 'lucide-react';
+import { Heart, Sparkles, Shield, Users, MapPin } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export default function Landing() {
@@ -20,7 +20,7 @@ export default function Landing() {
             <div className="w-10 h-10 rounded-xl bg-gradient-primary flex items-center justify-center">
               <Heart className="w-5 h-5 text-white" fill="white" />
             </div>
-            <span className="font-display text-xl font-bold gradient-text">Soulmate</span>
+            <span className="font-display text-xl font-bold gradient-text">Tyagi Rishta</span>
           </div>
           <Link to="/login">
             <Button variant="glass" size="sm">
@@ -34,28 +34,28 @@ export default function Landing() {
           <div className="animate-slide-up">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass-card mb-6">
               <Sparkles className="w-4 h-4 text-primary" />
-              <span className="text-sm text-muted-foreground">Find Your Perfect Match</span>
+              <span className="text-sm text-muted-foreground">Tyagi Community Matrimony</span>
             </div>
-            
+
             <h1 className="font-display text-4xl md:text-6xl font-bold mb-6 leading-tight">
-              Where Love
+              Find Your
               <br />
-              <span className="gradient-text">Finds Home</span>
+              <span className="gradient-text">Perfect Match</span>
             </h1>
-            
+
             <p className="text-muted-foreground text-lg max-w-md mx-auto mb-8">
-              Join millions of singles finding meaningful connections. Your soulmate is just a swipe away.
+              Trusted matrimonial platform exclusively for the Tyagi community. Connect with verified profiles from families you can trust.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link to="/signup">
                 <Button variant="gradient" size="lg" className="w-full sm:w-auto">
-                  Get Started Free
+                  Register Free
                 </Button>
               </Link>
               <Link to="/discover">
                 <Button variant="glass" size="lg" className="w-full sm:w-auto">
-                  Explore Profiles
+                  Browse Profiles
                 </Button>
               </Link>
             </div>
@@ -67,31 +67,52 @@ export default function Landing() {
               <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center mx-auto mb-4">
                 <Shield className="w-6 h-6 text-primary" />
               </div>
-              <h3 className="font-semibold mb-2">Verified Profiles</h3>
-              <p className="text-sm text-muted-foreground">Every profile is manually verified for your safety</p>
+              <h3 className="font-semibold mb-2">Gotra Verified</h3>
+              <p className="text-sm text-muted-foreground">Every profile shows Gotra for proper matching as per tradition</p>
             </div>
-            
+
             <div className="glass-card p-6 rounded-2xl text-center">
               <div className="w-12 h-12 rounded-xl bg-accent/20 flex items-center justify-center mx-auto mb-4">
-                <Heart className="w-6 h-6 text-accent" />
+                <MapPin className="w-6 h-6 text-accent" />
               </div>
-              <h3 className="font-semibold mb-2">Smart Matching</h3>
-              <p className="text-sm text-muted-foreground">AI-powered compatibility based on your preferences</p>
+              <h3 className="font-semibold mb-2">Western UP & NCR</h3>
+              <p className="text-sm text-muted-foreground">Connect with Tyagi families from your native regions</p>
             </div>
-            
+
             <div className="glass-card p-6 rounded-2xl text-center">
               <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center mx-auto mb-4">
                 <Users className="w-6 h-6 text-primary" />
               </div>
-              <h3 className="font-semibold mb-2">5M+ Members</h3>
-              <p className="text-sm text-muted-foreground">Join our growing community of singles</p>
+              <h3 className="font-semibold mb-2">Family Profiles</h3>
+              <p className="text-sm text-muted-foreground">Complete family background for transparent matching</p>
+            </div>
+          </div>
+
+          {/* Trust Section */}
+          <div className="mt-16 glass-card p-6 rounded-2xl max-w-md animate-fade-in" style={{ animationDelay: '0.6s' }}>
+            <p className="text-sm text-muted-foreground mb-3">🙏 Built by Tyagis, for Tyagis</p>
+            <div className="flex items-center justify-center gap-6 text-center">
+              <div>
+                <div className="text-2xl font-bold text-primary">500+</div>
+                <div className="text-xs text-muted-foreground">Registered</div>
+              </div>
+              <div className="w-px h-8 bg-white/10" />
+              <div>
+                <div className="text-2xl font-bold text-primary">50+</div>
+                <div className="text-xs text-muted-foreground">Villages</div>
+              </div>
+              <div className="w-px h-8 bg-white/10" />
+              <div>
+                <div className="text-2xl font-bold text-primary">15+</div>
+                <div className="text-xs text-muted-foreground">Gotras</div>
+              </div>
             </div>
           </div>
         </main>
 
         {/* Footer */}
         <footer className="p-6 text-center text-sm text-muted-foreground">
-          <p>© 2024 Soulmate. Made with ❤️ for finding love.</p>
+          <p>© 2025 Tyagi Rishta. Made with ❤️ for our community.</p>
         </footer>
       </div>
     </div>

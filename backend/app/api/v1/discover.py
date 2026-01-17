@@ -179,23 +179,31 @@ async def create_swipe(
     result = await db.swipes.insert_one(swipe_doc)
     swipe_doc["_id"] = result.inserted_id
     
-    # Check for match (if action is like or super_like)
+    # Handle match request logic (if action is like or super_like)
     is_match = False
+    is_request_sent = False
     if swipe_data.action.value in ["like", "super_like"]:
-        # Check if target user also liked current user
-        reverse_swipe = await db.swipes.find_one({
-            "user_id": target_user["_id"],
-            "target_user_id": current_user["_id"],
-            "action": {"$in": ["like", "super_like"]}
+        # Check if there's already a pending match request from target to current user
+        existing_request = await db.match_requests.find_one({
+            "from_user_id": target_user["_id"],
+            "to_user_id": current_user["_id"],
+            "status": "pending"
         })
         
-        if reverse_swipe:
+        if existing_request:
+            # Target already requested to match with us - auto accept and create match!
             is_match = True
+            
+            # Update the existing request to accepted
+            await db.match_requests.update_one(
+                {"_id": existing_request["_id"]},
+                {"$set": {"status": "accepted", "resolved_at": datetime.utcnow()}}
+            )
             
             # Create match
             match_doc = {
-                "user1_id": current_user["_id"],
-                "user2_id": target_user["_id"],
+                "user1_id": target_user["_id"],  # Original requester
+                "user2_id": current_user["_id"],  # Accepter
                 "matched_at": datetime.utcnow(),
                 "is_active": True,
                 "unread_count_user1": 0,
@@ -209,8 +217,8 @@ async def create_swipe(
                 {
                     "user_id": current_user["_id"],
                     "type": "new_match",
-                    "title": "New Match!",
-                    "message": f"You matched with {target_user['name']}",
+                    "title": "New Match! 💕",
+                    "message": f"You and {target_user['name']} are now matched!",
                     "data": {"match_user_id": str(target_user["_id"])},
                     "read": False,
                     "created_at": datetime.utcnow()
@@ -218,16 +226,60 @@ async def create_swipe(
                 {
                     "user_id": target_user["_id"],
                     "type": "new_match",
-                    "title": "New Match!",
-                    "message": f"You matched with {current_user['name']}",
+                    "title": "New Match! 💕",
+                    "message": f"You and {current_user['name']} are now matched!",
                     "data": {"match_user_id": str(current_user["_id"])},
                     "read": False,
                     "created_at": datetime.utcnow()
                 }
             ])
+        else:
+            # Create a new match request
+            is_request_sent = True
+            
+            # Check if we already sent a request
+            existing_outgoing = await db.match_requests.find_one({
+                "from_user_id": current_user["_id"],
+                "to_user_id": target_user["_id"]
+            })
+            
+            if not existing_outgoing:
+                # Create match request
+                request_doc = {
+                    "from_user_id": current_user["_id"],
+                    "to_user_id": target_user["_id"],
+                    "status": "pending",  # pending, accepted, rejected
+                    "created_at": datetime.utcnow()
+                }
+                await db.match_requests.insert_one(request_doc)
+                
+                # Notify the sender that their request was sent
+                await db.notifications.insert_one({
+                    "user_id": current_user["_id"],
+                    "type": "request_sent",
+                    "title": "Interest Sent! 💌",
+                    "message": f"Your interest has been sent to {target_user['name']}",
+                    "data": {"user_id": str(target_user["_id"])},
+                    "read": False,
+                    "created_at": datetime.utcnow()
+                })
+                
+                # Notify the target user about the match request
+                request_type = "super_interest" if swipe_data.action.value == "super_like" else "match_request"
+                title = "Super Interest Received! ⭐" if swipe_data.action.value == "super_like" else "New Interest! 💕"
+                
+                await db.notifications.insert_one({
+                    "user_id": target_user["_id"],
+                    "type": request_type,
+                    "title": title,
+                    "message": f"{current_user['name']} is interested in you! Accept or Decline?",
+                    "data": {"user_id": str(current_user["_id"])},
+                    "read": False,
+                    "created_at": datetime.utcnow()
+                })
     
-    # Create notification for super like
-    if swipe_data.action.value == "super_like":
+    # Create notification for super like (additional visibility)
+    if swipe_data.action.value == "super_like" and not is_match:
         await db.notifications.insert_one({
             "user_id": target_user["_id"],
             "type": "super_like",

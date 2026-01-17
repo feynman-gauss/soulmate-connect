@@ -3,15 +3,39 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Heart, Mail, Lock, User, ArrowLeft, Eye, EyeOff, Phone } from 'lucide-react';
+import { Heart, Mail, Lock, User, ArrowLeft, Eye, EyeOff, Phone, MapPin, Users, Calendar } from 'lucide-react';
 import { toast } from 'sonner';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { api } from '@/services/api';
+
+// Tyagi Gotra options
+const GOTRA_OPTIONS = [
+  'Bhardwaj', 'Kashyap', 'Vashishtha', 'Gautam', 'Sandilya',
+  'Kaushik', 'Parashar', 'Atri', 'Agastya', 'Jamadagni',
+  'Garg', 'Vatsa', 'Shandilya', 'Mudgal', 'Other'
+];
+
+// Sub-caste options
+const SUB_CASTE_OPTIONS = [
+  'Barhsena Tyagi', 'Chaumukha Tyagi', 'Dauhar Tyagi',
+  'Baliyan Tyagi', 'Khaga Tyagi', 'Other'
+];
+
+// Manglik options
+const MANGLIK_OPTIONS = [
+  { value: 'no', label: 'No' },
+  { value: 'yes', label: 'Yes' },
+  { value: 'partial', label: 'Partial (Anshik)' },
+  { value: 'dont_know', label: "Don't Know" },
+];
 
 export default function Signup() {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [step, setStep] = useState(1);
+  const totalSteps = 4;
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -19,16 +43,31 @@ export default function Signup() {
     password: '',
     gender: 'male',
     lookingFor: 'woman',
+    dateOfBirth: '',
+    gotra: '',
+    subCaste: '',
+    nativeVillage: '',
+    manglikStatus: '',
+    fatherName: '',
+    fatherOccupation: '',
+    motherName: '',
+    motherOccupation: '',
   });
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (step < 2) {
-      setStep(step + 1);
-      return;
+  const calculateAge = (dob: string): number => {
+    if (!dob) return 25;
+    const birthDate = new Date(dob);
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
     }
+    return age;
+  };
 
+  const handleRegister = async (skipOptional: boolean = false) => {
     setIsLoading(true);
     try {
       await api.auth.register({
@@ -38,9 +77,14 @@ export default function Signup() {
         password: formData.password,
         gender: formData.gender,
         looking_for: formData.lookingFor,
-        age: 25 // Default age for now as it's required by API but not in form
+        age: calculateAge(formData.dateOfBirth),
+        gotra: skipOptional ? undefined : (formData.gotra || undefined),
+        sub_caste: skipOptional ? undefined : (formData.subCaste || undefined),
+        native_village: skipOptional ? undefined : (formData.nativeVillage || undefined),
+        date_of_birth: formData.dateOfBirth || undefined,
+        manglik_status: skipOptional ? undefined : (formData.manglikStatus || undefined),
       });
-      toast.success('Account created! Welcome to Soulmate');
+      toast.success('Account created! Welcome to Tyagi Rishta');
       navigate('/discover');
     } catch (error: any) {
       toast.error(error.message || 'Registration failed');
@@ -49,49 +93,64 @@ export default function Signup() {
     }
   };
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (step < 3) {
+      setStep(step + 1);
+      return;
+    }
+    if (step >= 3) {
+      await handleRegister(false);
+    }
+  };
+
+  const handleSkipOptional = async () => {
+    await handleRegister(true);
+  };
+
+  const renderStepIndicator = () => (
+    <div className="flex gap-2">
+      {Array.from({ length: totalSteps }, (_, i) => i + 1).map((s) => (
+        <div
+          key={s}
+          className={`h-1 rounded-full transition-colors ${s <= step ? 'bg-primary w-8' : 'bg-muted w-6'
+            } ${s > 2 ? 'opacity-50' : ''}`}
+        />
+      ))}
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-background relative overflow-hidden flex flex-col">
-      {/* Background */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 w-96 h-96 bg-primary/30 rounded-full blur-3xl animate-pulse-slow" />
         <div className="absolute bottom-20 -left-40 w-[500px] h-[500px] bg-accent/20 rounded-full blur-3xl animate-pulse-slow" />
       </div>
 
-      {/* Header */}
       <header className="p-6 relative z-10 flex items-center justify-between">
         <button onClick={() => step > 1 ? setStep(step - 1) : navigate('/')}>
           <ArrowLeft className="w-5 h-5" />
         </button>
-        <div className="flex gap-2">
-          {[1, 2].map((s) => (
-            <div
-              key={s}
-              className={`h-1 w-8 rounded-full transition-colors ${s <= step ? 'bg-primary' : 'bg-muted'
-                }`}
-            />
-          ))}
-        </div>
+        {renderStepIndicator()}
         <div className="w-5" />
       </header>
 
-      {/* Content */}
-      <main className="flex-1 flex flex-col items-center justify-center px-6 relative z-10">
+      <main className="flex-1 flex flex-col items-center justify-center px-6 relative z-10 overflow-y-auto py-4">
         <div className="w-full max-w-sm">
+
           {step === 1 && (
             <>
-              {/* Logo */}
-              <div className="text-center mb-8">
+              <div className="text-center mb-6">
                 <div className="w-16 h-16 rounded-2xl bg-gradient-primary flex items-center justify-center mx-auto mb-4">
                   <Heart className="w-8 h-8 text-white" fill="white" />
                 </div>
-                <h1 className="font-display text-2xl font-bold mb-2">Create Account</h1>
-                <p className="text-muted-foreground">Start your journey to find love</p>
+                <h1 className="font-display text-2xl font-bold mb-2">Join Tyagi Rishta</h1>
+                <p className="text-muted-foreground text-sm">Find your perfect match within the community</p>
               </div>
 
-              {/* Form Step 1 */}
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name">Full Name</Label>
+                  <Label htmlFor="name">Full Name *</Label>
                   <div className="relative">
                     <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <Input
@@ -106,7 +165,7 @@ export default function Signup() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="email">Email *</Label>
                   <div className="relative">
                     <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <Input
@@ -122,7 +181,7 @@ export default function Signup() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="phone">Phone Number</Label>
+                  <Label htmlFor="phone">Phone Number *</Label>
                   <div className="relative">
                     <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <Input
@@ -138,7 +197,7 @@ export default function Signup() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="password">Password</Label>
+                  <Label htmlFor="password">Password *</Label>
                   <div className="relative">
                     <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <Input
@@ -155,51 +214,37 @@ export default function Signup() {
                       onClick={() => setShowPassword(!showPassword)}
                       className="absolute right-4 top-1/2 -translate-y-1/2"
                     >
-                      {showPassword ? (
-                        <EyeOff className="w-4 h-4 text-muted-foreground" />
-                      ) : (
-                        <Eye className="w-4 h-4 text-muted-foreground" />
-                      )}
+                      {showPassword ? <EyeOff className="w-4 h-4 text-muted-foreground" /> : <Eye className="w-4 h-4 text-muted-foreground" />}
                     </button>
                   </div>
-                  <p className="text-xs text-muted-foreground ml-1">
-                    Must be at least 8 characters, include a number and a letter.
-                  </p>
+                  <p className="text-xs text-muted-foreground ml-1">At least 8 characters with a number and letter</p>
                 </div>
 
-                <Button type="submit" variant="gradient" className="w-full" size="lg">
-                  Continue
-                </Button>
+                <Button type="submit" variant="gradient" className="w-full" size="lg">Continue</Button>
               </form>
             </>
           )}
 
           {step === 2 && (
             <>
-              <div className="text-center mb-8">
-                <h1 className="font-display text-2xl font-bold mb-2">About You</h1>
-                <p className="text-muted-foreground">Help us find your perfect match</p>
+              <div className="text-center mb-6">
+                <h1 className="font-display text-2xl font-bold mb-2">Personal Details</h1>
+                <p className="text-muted-foreground text-sm">Tell us about yourself</p>
               </div>
 
-              <form onSubmit={handleSubmit} className="space-y-6">
+              <form onSubmit={handleSubmit} className="space-y-5">
                 <div className="space-y-3">
-                  <Label>I am a</Label>
-                  <RadioGroup
-                    value={formData.gender}
-                    onValueChange={(value) => setFormData({ ...formData, gender: value })}
-                    className="flex gap-4"
-                  >
+                  <Label>I am a *</Label>
+                  <RadioGroup value={formData.gender} onValueChange={(value) => setFormData({ ...formData, gender: value })} className="flex gap-4">
                     <label className="flex-1 cursor-pointer">
-                      <div className={`glass-card rounded-xl p-4 text-center transition-all ${formData.gender === 'male' ? 'ring-2 ring-primary bg-primary/10' : ''
-                        }`}>
+                      <div className={`glass-card rounded-xl p-4 text-center transition-all ${formData.gender === 'male' ? 'ring-2 ring-primary bg-primary/10' : ''}`}>
                         <RadioGroupItem value="male" className="sr-only" />
                         <span className="text-2xl mb-2 block">👨</span>
                         <span className="font-medium">Man</span>
                       </div>
                     </label>
                     <label className="flex-1 cursor-pointer">
-                      <div className={`glass-card rounded-xl p-4 text-center transition-all ${formData.gender === 'female' ? 'ring-2 ring-primary bg-primary/10' : ''
-                        }`}>
+                      <div className={`glass-card rounded-xl p-4 text-center transition-all ${formData.gender === 'female' ? 'ring-2 ring-primary bg-primary/10' : ''}`}>
                         <RadioGroupItem value="female" className="sr-only" />
                         <span className="text-2xl mb-2 block">👩</span>
                         <span className="font-medium">Woman</span>
@@ -209,44 +254,190 @@ export default function Signup() {
                 </div>
 
                 <div className="space-y-3">
-                  <Label>Looking for</Label>
-                  <RadioGroup
-                    value={formData.lookingFor}
-                    onValueChange={(value) => setFormData({ ...formData, lookingFor: value })}
-                    className="flex gap-4"
-                  >
+                  <Label>Looking for *</Label>
+                  <RadioGroup value={formData.lookingFor} onValueChange={(value) => setFormData({ ...formData, lookingFor: value })} className="flex gap-4">
                     <label className="flex-1 cursor-pointer">
-                      <div className={`glass-card rounded-xl p-4 text-center transition-all ${formData.lookingFor === 'woman' ? 'ring-2 ring-primary bg-primary/10' : ''
-                        }`}>
+                      <div className={`glass-card rounded-xl p-4 text-center transition-all ${formData.lookingFor === 'woman' ? 'ring-2 ring-primary bg-primary/10' : ''}`}>
                         <RadioGroupItem value="woman" className="sr-only" />
                         <span className="text-2xl mb-2 block">👩</span>
-                        <span className="font-medium">Woman</span>
+                        <span className="font-medium">Bride</span>
                       </div>
                     </label>
                     <label className="flex-1 cursor-pointer">
-                      <div className={`glass-card rounded-xl p-4 text-center transition-all ${formData.lookingFor === 'man' ? 'ring-2 ring-primary bg-primary/10' : ''
-                        }`}>
+                      <div className={`glass-card rounded-xl p-4 text-center transition-all ${formData.lookingFor === 'man' ? 'ring-2 ring-primary bg-primary/10' : ''}`}>
                         <RadioGroupItem value="man" className="sr-only" />
                         <span className="text-2xl mb-2 block">👨</span>
-                        <span className="font-medium">Man</span>
+                        <span className="font-medium">Groom</span>
                       </div>
                     </label>
                   </RadioGroup>
                 </div>
 
-                <Button type="submit" variant="gradient" className="w-full" size="lg" disabled={isLoading}>
-                  {isLoading ? 'Creating Account...' : 'Create Account'}
-                </Button>
+                <div className="space-y-2">
+                  <Label htmlFor="dob">Date of Birth *</Label>
+                  <div className="relative">
+                    <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      id="dob"
+                      type="date"
+                      value={formData.dateOfBirth}
+                      onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
+                      className="pl-12 glass-card border-white/10 h-12 rounded-xl"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <Button type="submit" variant="gradient" className="w-full" size="lg">Continue</Button>
               </form>
             </>
           )}
 
-          {/* Sign In Link */}
-          <p className="text-center mt-8 text-muted-foreground">
+          {step === 3 && (
+            <>
+              <div className="text-center mb-6">
+                <h1 className="font-display text-2xl font-bold mb-2">Community Details</h1>
+                <p className="text-muted-foreground text-sm">Your Tyagi community identity (optional)</p>
+              </div>
+
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="gotra">Gotra</Label>
+                  <Select value={formData.gotra} onValueChange={(value) => setFormData({ ...formData, gotra: value })}>
+                    <SelectTrigger className="glass-card border-white/10 h-12 rounded-xl">
+                      <SelectValue placeholder="Select your Gotra" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {GOTRA_OPTIONS.map((gotra) => (
+                        <SelectItem key={gotra} value={gotra}>{gotra}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">Important for matching - same gotra avoided</p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="subCaste">Sub-caste</Label>
+                  <Select value={formData.subCaste} onValueChange={(value) => setFormData({ ...formData, subCaste: value })}>
+                    <SelectTrigger className="glass-card border-white/10 h-12 rounded-xl">
+                      <SelectValue placeholder="Select sub-caste" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {SUB_CASTE_OPTIONS.map((caste) => (
+                        <SelectItem key={caste} value={caste}>{caste}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="nativeVillage">Native Village (Gaon)</Label>
+                  <div className="relative">
+                    <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      id="nativeVillage"
+                      placeholder="e.g., Baraut, Baghpat"
+                      value={formData.nativeVillage}
+                      onChange={(e) => setFormData({ ...formData, nativeVillage: e.target.value })}
+                      className="pl-12 glass-card border-white/10 h-12 rounded-xl"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="manglik">Manglik Status</Label>
+                  <Select value={formData.manglikStatus} onValueChange={(value) => setFormData({ ...formData, manglikStatus: value })}>
+                    <SelectTrigger className="glass-card border-white/10 h-12 rounded-xl">
+                      <SelectValue placeholder="Select Manglik status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {MANGLIK_OPTIONS.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="flex gap-3">
+                  <Button type="button" variant="glass" className="flex-1" size="lg" onClick={handleSkipOptional} disabled={isLoading}>
+                    Fill Later
+                  </Button>
+                  <Button type="submit" variant="gradient" className="flex-1" size="lg">Continue</Button>
+                </div>
+              </form>
+            </>
+          )}
+
+          {step === 4 && (
+            <>
+              <div className="text-center mb-6">
+                <div className="w-12 h-12 rounded-xl bg-gradient-primary flex items-center justify-center mx-auto mb-3">
+                  <Users className="w-6 h-6 text-white" />
+                </div>
+                <h1 className="font-display text-2xl font-bold mb-2">Family Background</h1>
+                <p className="text-muted-foreground text-sm">Help families connect (optional)</p>
+              </div>
+
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="fatherName">Father's Name</Label>
+                  <Input
+                    id="fatherName"
+                    placeholder="Enter father's name"
+                    value={formData.fatherName}
+                    onChange={(e) => setFormData({ ...formData, fatherName: e.target.value })}
+                    className="glass-card border-white/10 h-12 rounded-xl"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="fatherOccupation">Father's Occupation</Label>
+                  <Input
+                    id="fatherOccupation"
+                    placeholder="e.g., Farmer, Business, Govt. Service"
+                    value={formData.fatherOccupation}
+                    onChange={(e) => setFormData({ ...formData, fatherOccupation: e.target.value })}
+                    className="glass-card border-white/10 h-12 rounded-xl"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="motherName">Mother's Name</Label>
+                  <Input
+                    id="motherName"
+                    placeholder="Enter mother's name"
+                    value={formData.motherName}
+                    onChange={(e) => setFormData({ ...formData, motherName: e.target.value })}
+                    className="glass-card border-white/10 h-12 rounded-xl"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="motherOccupation">Mother's Occupation</Label>
+                  <Input
+                    id="motherOccupation"
+                    placeholder="e.g., Homemaker, Teacher"
+                    value={formData.motherOccupation}
+                    onChange={(e) => setFormData({ ...formData, motherOccupation: e.target.value })}
+                    className="glass-card border-white/10 h-12 rounded-xl"
+                  />
+                </div>
+
+                <div className="flex gap-3">
+                  <Button type="button" variant="glass" className="flex-1" size="lg" onClick={handleSkipOptional} disabled={isLoading}>
+                    Skip & Finish
+                  </Button>
+                  <Button type="submit" variant="gradient" className="flex-1" size="lg" disabled={isLoading}>
+                    {isLoading ? 'Creating...' : 'Create Account'}
+                  </Button>
+                </div>
+              </form>
+            </>
+          )}
+
+          <p className="text-center mt-6 text-muted-foreground">
             Already have an account?{' '}
-            <Link to="/login" className="text-primary font-semibold hover:underline">
-              Sign In
-            </Link>
+            <Link to="/login" className="text-primary font-semibold hover:underline">Sign In</Link>
           </p>
         </div>
       </main>

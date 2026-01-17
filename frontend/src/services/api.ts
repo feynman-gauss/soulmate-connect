@@ -48,6 +48,12 @@ export const api = {
             gender: string;
             password: string;
             looking_for?: string;
+            // Tyagi Community Specific Fields
+            gotra?: string;
+            sub_caste?: string;
+            native_village?: string;
+            date_of_birth?: string;
+            manglik_status?: string;
         }) => {
             const response = await fetch(`${API_BASE_URL}/auth/register`, {
                 method: 'POST',
@@ -209,6 +215,41 @@ export const api = {
             const token = getAuthToken();
             const response = await fetch(`${API_BASE_URL}/matches/${matchId}`, {
                 method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` },
+            });
+            return handleResponse(response);
+        },
+
+        // Match Requests
+        getReceivedRequests: async () => {
+            const token = getAuthToken();
+            const response = await fetch(`${API_BASE_URL}/matches/requests`, {
+                headers: { 'Authorization': `Bearer ${token}` },
+            });
+            return handleResponse(response);
+        },
+
+        getSentRequests: async () => {
+            const token = getAuthToken();
+            const response = await fetch(`${API_BASE_URL}/matches/requests/sent`, {
+                headers: { 'Authorization': `Bearer ${token}` },
+            });
+            return handleResponse(response);
+        },
+
+        acceptRequest: async (requestId: string) => {
+            const token = getAuthToken();
+            const response = await fetch(`${API_BASE_URL}/matches/requests/${requestId}/accept`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` },
+            });
+            return handleResponse(response);
+        },
+
+        rejectRequest: async (requestId: string) => {
+            const token = getAuthToken();
+            const response = await fetch(`${API_BASE_URL}/matches/requests/${requestId}/reject`, {
+                method: 'POST',
                 headers: { 'Authorization': `Bearer ${token}` },
             });
             return handleResponse(response);

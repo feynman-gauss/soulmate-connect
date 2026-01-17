@@ -8,26 +8,33 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { api } from '@/services/api';
 import { useEffect } from 'react';
+import { NotificationDropdown } from '@/components/notifications/NotificationDropdown';
 
 export default function Discover() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [profiles, setProfiles] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isShowingDemo, setIsShowingDemo] = useState(false);
 
   useEffect(() => {
     const fetchProfiles = async () => {
       try {
         setIsLoading(true);
         const data = await api.discover.getProfiles();
-        // If backend returns empty, fallback to mock for demonstration
+        // If backend returns profiles, use them
         if (data && data.length > 0) {
           setProfiles(data);
+          setIsShowingDemo(false);
         } else {
+          // Fallback to single demo profile
           setProfiles(mockProfiles);
+          setIsShowingDemo(true);
         }
       } catch (error) {
         console.error('Failed to fetch profiles:', error);
+        // Fallback to single demo profile on error
         setProfiles(mockProfiles);
+        setIsShowingDemo(true);
       } finally {
         setIsLoading(false);
       }
@@ -92,21 +99,25 @@ export default function Discover() {
           </div>
           <div className="flex items-center gap-3">
             <FilterSheet />
-            <Button variant="glass" size="icon" className="rounded-full relative">
-              <Bell className="w-5 h-5" />
-              <span className="absolute -top-1 -right-1 w-4 h-4 bg-primary rounded-full text-[10px] flex items-center justify-center">
-                3
-              </span>
-            </Button>
+            <NotificationDropdown />
           </div>
         </div>
+
+        {/* Demo Profile Banner */}
+        {isShowingDemo && profiles[currentIndex] && (
+          <div className="glass-card rounded-xl p-3 mb-4 border border-primary/30 bg-primary/5">
+            <p className="text-sm text-center text-muted-foreground">
+              👋 This is a <span className="text-primary font-semibold">demo profile</span>. Invite Tyagi community members to see real profiles!
+            </p>
+          </div>
+        )}
 
         {/* Profile Cards */}
         <div className="flex items-center justify-center min-h-[70vh]">
           {isLoading ? (
             <div className="flex flex-col items-center gap-4">
               <Loader2 className="w-10 h-10 text-primary animate-spin" />
-              <p className="text-muted-foreground">Finding your matches...</p>
+              <p className="text-muted-foreground">Finding profiles from the community...</p>
             </div>
           ) : profiles[currentIndex] ? (
             <ProfileCard
@@ -120,8 +131,13 @@ export default function Discover() {
             <div className="text-center p-8 glass-card rounded-3xl max-w-sm">
               <Sparkles className="w-12 h-12 text-primary mx-auto mb-4" />
               <h3 className="font-display text-xl font-bold mb-2">No more profiles</h3>
-              <p className="text-muted-foreground text-sm">Check back later for new people nearby!</p>
-              <Button variant="gradient" className="mt-6 w-full" onClick={() => window.location.reload()}>
+              <p className="text-muted-foreground text-sm mb-4">
+                {isShowingDemo
+                  ? "Invite more Tyagi community members to join and find your perfect match!"
+                  : "Check back later for new profiles from the community!"
+                }
+              </p>
+              <Button variant="gradient" className="w-full" onClick={() => window.location.reload()}>
                 Refresh
               </Button>
             </div>

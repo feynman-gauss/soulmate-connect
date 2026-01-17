@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { mockProfiles } from '@/data/mockProfiles';
 import { ArrowLeft, Phone, Video, MoreVertical, Send, Image, Smile, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { api, createChatWebSocket } from '@/services/api';
 import { useEffect, useRef } from 'react';
+import { getProfilePhoto } from '@/utils/profileUtils';
+import { formatMessageTime } from '@/utils/timeUtils';
 
 interface Message {
   id: string;
@@ -146,7 +147,7 @@ export default function ChatConversation() {
           </Button>
         </Link>
         <img
-          src={matchProfile?.photos?.[0] || 'https://via.placeholder.com/150'}
+          src={getProfilePhoto(matchProfile?.photos, matchProfile?.gender)}
           alt={matchProfile?.name || 'User'}
           className="w-10 h-10 rounded-full object-cover ring-2 ring-primary/30"
         />
@@ -194,7 +195,7 @@ export default function ChatConversation() {
                 "text-[10px] mt-1",
                 msg.sender_id === currentUserId ? "text-white/70" : "text-muted-foreground"
               )}>
-                {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                {formatMessageTime(msg.created_at)}
               </p>
             </div>
           </div>

@@ -12,6 +12,7 @@ import Chat from "./pages/Chat";
 import ChatConversation from "./pages/ChatConversation";
 import Search from "./pages/Search";
 import Profile from "./pages/Profile";
+import ProfileEdit from "./pages/ProfileEdit";
 import ProfileView from "./pages/ProfileView";
 import NotFound from "./pages/NotFound";
 
@@ -33,6 +34,7 @@ const App = () => (
           <Route path="/chat/:id" element={<ChatConversation />} />
           <Route path="/search" element={<Search />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/profile/edit" element={<ProfileEdit />} />
           <Route path="/profile/:id" element={<ProfileView />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
