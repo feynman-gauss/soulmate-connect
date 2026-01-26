@@ -3,8 +3,21 @@ from motor.motor_asyncio import AsyncIOMotorDatabase
 from app.database import get_database
 from app.utils.security import get_current_user
 from typing import List, Optional
+from bson import ObjectId
 
 router = APIRouter(prefix="/search", tags=["Search"])
+
+
+def to_object_id(id_val):
+    """Safely convert any ID to ObjectId"""
+    if isinstance(id_val, ObjectId):
+        return id_val
+    if isinstance(id_val, str):
+        try:
+            return ObjectId(id_val)
+        except:
+            return None
+    return None
 
 
 def serialize_user(user: dict) -> dict:
@@ -31,9 +44,56 @@ async def search_profiles(
 ):
     """Search profiles with filters"""
     
-    # Build search query
+    # Build list of IDs to exclude from search results
+    current_user_id = current_user["_id"]
+    current_user_id_str = str(current_user_id)
+    excluded_ids = [current_user_id]  # Always exclude self
+    
+    # 1. Exclude users from active matches
+    matches = await db.matches.find({
+        "$or": [
+            {"user1_id": current_user_id},
+            {"user2_id": current_user_id}
+        ],
+        "is_active": True
+    }).to_list(length=None)
+    
+    for match in matches:
+        u1 = match.get("user1_id")
+        u2 = match.get("user2_id")
+        # Determine which user is the "other" user
+        if str(u1) == current_user_id_str:
+            other_id = to_object_id(u2)
+        else:
+            other_id = to_object_id(u1)
+        if other_id and other_id not in excluded_ids:
+            excluded_ids.append(other_id)
+    
+    # 2. Exclude users with pending sent requests
+    sent_requests = await db.match_requests.find({
+        "from_user_id": current_user_id,
+        "status": "pending"
+    }).to_list(length=None)
+    
+    for req in sent_requests:
+        other_id = to_object_id(req.get("to_user_id"))
+        if other_id and other_id not in excluded_ids:
+            excluded_ids.append(other_id)
+    
+    # 3. Exclude users with pending received requests
+    received_requests = await db.match_requests.find({
+        "to_user_id": current_user_id,
+        "status": "pending"
+    }).to_list(length=None)
+    
+    for req in received_requests:
+        other_id = to_object_id(req.get("from_user_id"))
+        if other_id and other_id not in excluded_ids:
+            excluded_ids.append(other_id)
+    
+    # Build search query with exclusions
     search_filter = {
-        "_id": {"$ne": current_user["_id"]},  # Exclude self
+        "_id": {"$nin": excluded_ids},
         "is_active": True
     }
     

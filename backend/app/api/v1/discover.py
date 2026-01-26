@@ -73,18 +73,54 @@ async def get_discovery_profiles(
 ):
     """Get profiles for discovery feed"""
     
-    # Get user's swiped profiles
+    current_user_id = current_user["_id"]
+    excluded_ids = [current_user_id]  # Always exclude self
+    
+    # 1. Get user's swiped profiles
     swiped = await db.swipes.find(
-        {"user_id": current_user["_id"]}
+        {"user_id": current_user_id}
     ).to_list(length=None)
     
-    swiped_ids = [swipe["target_user_id"] for swipe in swiped]
-    swiped_ids.append(current_user["_id"])  # Exclude self
+    for swipe in swiped:
+        target_id = swipe.get("target_user_id")
+        if target_id and target_id not in excluded_ids:
+            excluded_ids.append(target_id)
+    
+    # 2. Exclude users from active matches
+    matches = await db.matches.find({
+        "$or": [
+            {"user1_id": current_user_id},
+            {"user2_id": current_user_id}
+        ],
+        "is_active": True
+    }).to_list(length=None)
+    
+    for match in matches:
+        u1 = match.get("user1_id")
+        u2 = match.get("user2_id")
+        other_id = u2 if u1 == current_user_id else u1
+        if other_id and other_id not in excluded_ids:
+            excluded_ids.append(other_id)
+    
+    # 3. Exclude users with pending match requests (sent or received)
+    pending_requests = await db.match_requests.find({
+        "$or": [
+            {"from_user_id": current_user_id, "status": "pending"},
+            {"to_user_id": current_user_id, "status": "pending"}
+        ]
+    }).to_list(length=None)
+    
+    for req in pending_requests:
+        from_id = req.get("from_user_id")
+        to_id = req.get("to_user_id")
+        other_id = to_id if from_id == current_user_id else from_id
+        if other_id and other_id not in excluded_ids:
+            excluded_ids.append(other_id)
     
     # Build filter based on preferences
     prefs = current_user.get("preferences", {})
     filter_query = {
-        "_id": {"$nin": swiped_ids},
+        "_id": {"$nin": excluded_ids},
         "is_active": True
     }
     
