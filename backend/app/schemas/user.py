@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr, Field, validator
-from typing import Optional, List
+from typing import Optional, List, Dict
 from datetime import datetime
 from enum import Enum
 
@@ -7,6 +7,27 @@ from enum import Enum
 class GenderEnum(str, Enum):
     male = "male"
     female = "female"
+
+
+class ManglikStatusEnum(str, Enum):
+    manglik = "manglik"
+    non_manglik = "non_manglik"
+    anshik_manglik = "anshik_manglik"
+    not_applicable = "not_applicable"
+
+
+class FamilyDetailsSchema(BaseModel):
+    """Family background details for Tyagi community profiles"""
+    father_name: Optional[str] = None
+    father_occupation: Optional[str] = None
+    mother_name: Optional[str] = None
+    mother_occupation: Optional[str] = None
+    siblings: Optional[int] = None
+    brothers: Optional[int] = None
+    sisters: Optional[int] = None
+    family_type: Optional[str] = None  # Joint, Nuclear
+    family_status: Optional[str] = None  # Middle Class, Upper Middle Class, Rich
+    family_values: Optional[str] = None  # Traditional, Moderate, Liberal
 
 
 class LocationSchema(BaseModel):
@@ -64,6 +85,15 @@ class UserUpdate(BaseModel):
     about: Optional[str] = Field(None, max_length=500)
     interests: Optional[List[str]] = None
     looking_for: Optional[List[str]] = None
+    # Tyagi Community Fields
+    gotra: Optional[str] = None
+    sub_caste: Optional[str] = None
+    native_village: Optional[str] = None
+    manglik_status: Optional[ManglikStatusEnum] = None
+    family_details: Optional[FamilyDetailsSchema] = None
+    date_of_birth: Optional[str] = None  # For horoscope matching
+    birth_time: Optional[str] = None
+    birth_place: Optional[str] = None
 
 
 class UserResponse(BaseModel):
@@ -87,6 +117,15 @@ class UserResponse(BaseModel):
     profile_completion: int = 0
     last_active: Optional[datetime] = None
     created_at: datetime
+    # Tyagi Community Fields
+    gotra: Optional[str] = None
+    sub_caste: Optional[str] = None
+    native_village: Optional[str] = None
+    manglik_status: Optional[str] = None
+    family_details: Optional[FamilyDetailsSchema] = None
+    date_of_birth: Optional[str] = None
+    birth_time: Optional[str] = None
+    birth_place: Optional[str] = None
     
     class Config:
         from_attributes = True

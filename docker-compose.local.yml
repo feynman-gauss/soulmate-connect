@@ -1,0 +1,90 @@
+version: '3.8'
+
+# Local Docker Compose for Soulmate Connect (HTTP only, no SSL)
+# Usage: docker-compose -f docker-compose.local.yml up -d --build
+
+services:
+  # Nginx Reverse Proxy (HTTP only)
+  nginx:
+    image: nginx:alpine
+    container_name: soulmate_nginx
+    restart: always
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.local.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - backend
+      - frontend
+    networks:
+      - soulmate_network
+
+  # MongoDB
+  mongodb:
+    image: mongo:7.0
+    container_name: soulmate_mongodb
+    restart: always
+    ports:
+      - "127.0.0.1:27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: admin123
+      MONGO_INITDB_DATABASE: soulmate_connect
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - soulmate_network
+
+  # Redis
+  redis:
+    image: redis:7-alpine
+    container_name: soulmate_redis
+    restart: always
+    command: redis-server --requirepass redis123
+    ports:
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - soulmate_network
+
+  # FastAPI Backend
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: soulmate_backend
+    restart: always
+    environment:
+      - MONGODB_URL=mongodb://admin:admin123@mongodb:27017
+      - REDIS_URL=redis://:redis123@redis:6379
+      - DEBUG=True
+      - ENVIRONMENT=development
+      - CORS_ORIGINS=http://localhost,http://localhost:80
+    volumes:
+      - ./backend/uploads:/app/uploads
+      - ./backend/logs:/app/logs
+    depends_on:
+      - mongodb
+      - redis
+    networks:
+      - soulmate_network
+
+  # React Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod
+    container_name: soulmate_frontend
+    restart: always
+    networks:
+      - soulmate_network
+
+volumes:
+  mongodb_data:
+  redis_data:
+
+
+networks:
+  soulmate_network:
+    driver: bridge

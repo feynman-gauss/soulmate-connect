@@ -5,15 +5,22 @@ from fastapi.staticfiles import StaticFiles
 from app.config import settings
 from app.database import connect_to_mongo, close_mongo_connection, connect_to_redis, close_redis_connection
 from app.api.v1 import auth, profiles, discover, matches, chat, search, notifications
-import logging
 from pathlib import Path
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+# Initialize structured logging system
+from app.core.logging_config import setup_logging, get_logger
+from app.middleware.logging_middleware import RequestLoggingMiddleware
+from app.core.exception_handlers import register_exception_handlers
+
+# Setup logging - colored console in debug mode, JSON otherwise
+logger = setup_logging(
+    log_level="DEBUG" if settings.DEBUG else "INFO",
+    log_dir="logs",
+    enable_json_file=True,
+    enable_console=True,
+    debug_mode=settings.DEBUG  # Colored output in development
 )
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 # Create FastAPI app
 app = FastAPI(
@@ -42,6 +49,14 @@ else:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+# Add request logging middleware (logs all requests/responses with timing)
+app.add_middleware(RequestLoggingMiddleware)
+
+# Register global exception handlers
+register_exception_handlers(app)
+
+logger.info("Logging middleware and exception handlers initialized")
 
 # Create uploads directory if it doesn't exist
 uploads_dir = Path(settings.UPLOAD_DIR)
@@ -106,33 +121,6 @@ app.include_router(notifications.router, prefix="/api/v1")
 from app.websockets.chat import websocket_endpoint
 app.add_api_websocket_route("/ws/chat", websocket_endpoint)
 
-
-from fastapi.responses import JSONResponse
-
-# Error handlers
-@app.exception_handler(404)
-async def not_found_handler(request, exc):
-    return JSONResponse(
-        status_code=404,
-        content={
-            "error": "Not Found",
-            "message": "The requested resource was not found",
-            "status_code": 404
-        }
-    )
-
-
-@app.exception_handler(500)
-async def internal_error_handler(request, exc):
-    logger.error(f"Internal server error: {exc}")
-    return JSONResponse(
-        status_code=500,
-        content={
-            "error": "Internal Server Error",
-            "message": "An unexpected error occurred",
-            "status_code": 500
-        }
-    )
 
 
 if __name__ == "__main__":

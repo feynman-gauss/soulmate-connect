@@ -1,0 +1,110 @@
+version: '3.8'
+
+# Production Docker Compose for Soulmate Connect
+# Usage: docker-compose -f docker-compose.prod.yml up -d
+
+services:
+  # Nginx Reverse Proxy with HTTPS
+  nginx:
+    image: nginx:alpine
+    container_name: soulmate_nginx
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - ./certbot/www:/var/www/certbot:ro
+    depends_on:
+      - backend
+      - frontend
+    networks:
+      - soulmate_network
+
+  # Certbot for SSL certificate renewal
+  certbot:
+    image: certbot/certbot:latest
+    container_name: soulmate_certbot
+    volumes:
+      - ./certbot/www:/var/www/certbot
+      - ./nginx/ssl:/etc/letsencrypt
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+    networks:
+      - soulmate_network
+
+  # MongoDB
+  mongodb:
+    image: mongo:7.0
+    container_name: soulmate_mongodb
+    restart: always
+    ports:
+      - "127.0.0.1:27017:27017" # Only localhost access
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER:-admin}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-admin123}
+      MONGO_INITDB_DATABASE: soulmate_connect
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - soulmate_network
+
+  # Redis
+  redis:
+    image: redis:7-alpine
+    container_name: soulmate_redis
+    restart: always
+    command: redis-server --requirepass ${REDIS_PASSWORD:-redis123}
+    ports:
+      - "127.0.0.1:6379:6379" # Only localhost access
+    volumes:
+      - redis_data:/data
+    networks:
+      - soulmate_network
+
+  # FastAPI Backend
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: soulmate_backend
+    restart: always
+    environment:
+      - MONGODB_URL=mongodb://${MONGO_USER:-admin}:${MONGO_PASSWORD:-admin123}@mongodb:27017
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-redis123}@redis:6379
+      - DEBUG=False
+      - ENVIRONMENT=production
+    volumes:
+      - ./backend/uploads:/app/uploads
+      - ./backend/logs:/app/logs
+    depends_on:
+      - mongodb
+      - redis
+    networks:
+      - soulmate_network
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8000/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # React Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod
+    container_name: soulmate_frontend
+    restart: always
+    environment:
+      - VITE_API_URL=https://your-domain.com/api/v1
+    networks:
+      - soulmate_network
+
+volumes:
+  mongodb_data:
+  redis_data:
+
+
+networks:
+  soulmate_network:
+    driver: bridge

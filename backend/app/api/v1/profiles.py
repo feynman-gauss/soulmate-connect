@@ -30,14 +30,18 @@ def calculate_profile_completion(user: dict) -> int:
         "phone": 5,
         "age": 5,
         "gender": 5,
-        "location": 10,
-        "religion": 10,
-        "education": 10,
-        "occupation": 10,
-        "height": 5,
-        "about": 15,
+        "location": 8,
+        "religion": 5,
+        "education": 8,
+        "occupation": 8,
+        "height": 3,
+        "about": 10,
         "photos": 10,  # At least one photo
         "interests": 5,
+        # Tyagi Community Fields
+        "gotra": 5,
+        "native_village": 5,
+        "family_details": 8,
     }
     
     score = 0
@@ -47,6 +51,9 @@ def calculate_profile_completion(user: dict) -> int:
                 score += points
         elif field == "location":
             if user.get(field) and user[field].get("city"):
+                score += points
+        elif field == "family_details":
+            if user.get(field) and user[field].get("father_name"):
                 score += points
         elif user.get(field):
             score += points
