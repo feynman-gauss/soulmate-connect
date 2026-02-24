@@ -1,0 +1,7 @@
+{
+  "name": "soulmate-connect-root",
+  "private": true,
+  "scripts": {
+    "build": "cd frontend && npm install && npm run build && cd .. && rm -rf public && mkdir -p public && cp -r frontend/dist/* public/"
+  }
+}

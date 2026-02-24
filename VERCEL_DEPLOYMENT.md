@@ -16,11 +16,8 @@ This repository contains both a Vite React frontend (`/frontend`) and a FastAPI 
    Leave the **Root Directory** as `./` (the default). Vercel will automatically detect the `vercel.json` at the root, which tells it how to route traffic between the Vite frontend and Python backend.
 
 3. **Build & Development Settings**
-   Expand the **Build and Output Settings** section and override the defaults with the following:
-   - **Framework Preset**: Vite
-   - **Build Command**: `cd frontend && npm install && npm run build`
-   - **Output Directory**: `frontend/dist`
-   - **Install Command**: `cd frontend && npm install`
+   Leave these settings as defaults! 
+   The newly added `package.json` in the root explicitly tells Vercel how to install and build the Vite frontend and outputs it to the `public/` directory seamlessly.
 
 4. **Environment Variables**
    Add the following Environment Variables in the Vercel UI before deploying:
