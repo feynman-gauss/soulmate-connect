@@ -54,8 +54,12 @@ except OSError as e:
     if not is_vercel:
         raise
 
-# Mount static files for uploads
-app.mount("/uploads", StaticFiles(directory=settings.UPLOAD_DIR), name="uploads")
+# Mount static files for uploads only if the directory exists
+# On serverless environments (like Vercel), this may be skipped if creation fails
+if uploads_dir.exists():
+    app.mount("/uploads", StaticFiles(directory=str(uploads_dir)), name="uploads")
+else:
+    logger.warning(f"Uploads directory {uploads_dir} does not exist. Skipping static files mount.")
 
 # Startup event
 @app.on_event("startup")
