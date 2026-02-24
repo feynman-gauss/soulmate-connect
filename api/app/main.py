@@ -11,11 +11,14 @@ from app.core.logging_config import setup_logging, get_logger
 from app.middleware.logging_middleware import RequestLoggingMiddleware
 from app.core.exception_handlers import register_exception_handlers
 
+import os
+is_vercel = os.environ.get("VERCEL") == "1"
+
 # Setup logging - colored console in debug mode, JSON otherwise
 logger = setup_logging(
     log_level="DEBUG" if settings.DEBUG else "INFO",
     log_dir="logs",
-    enable_json_file=True,
+    enable_json_file=not is_vercel,
     enable_console=True,
     debug_mode=settings.DEBUG  # Colored output in development
 )

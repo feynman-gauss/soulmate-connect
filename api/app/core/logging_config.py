@@ -128,9 +128,10 @@ def setup_logging(
     Returns:
         Root logger instance
     """
-    # Create logs directory
+    # Create logs directory if we're writing to files
     log_path = Path(log_dir)
-    log_path.mkdir(parents=True, exist_ok=True)
+    if enable_json_file:
+        log_path.mkdir(parents=True, exist_ok=True)
 
     # Get the root logger
     root_logger = logging.getLogger()

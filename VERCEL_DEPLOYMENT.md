@@ -1,6 +1,6 @@
 # Vercel Deployment Guide
 
-This repository contains both a Vite React frontend (`/frontend`) and a FastAPI Python backend (`/backend`). It is configured to deploy **both** to a single Vercel project seamlessly.
+This repository contains both a Vite React frontend (`/frontend`) and a FastAPI Python backend (`/api`). It is configured to deploy **both** to a single Vercel project seamlessly.
 
 ## Prerequisites
 - A [Vercel](https://vercel.com) account connected to your GitHub repository.
@@ -34,6 +34,6 @@ This repository contains both a Vite React frontend (`/frontend`) and a FastAPI 
    
 ## How it works
 
-- **API Requests**: Any request starting with `/api/*` is routed by Vercel to `api/index.py` (a Serverless Function). This file imports and runs the FastAPI app from the `/backend` folder.
+- **API Requests**: Any request starting with `/api/*` is routed by Vercel to `api/index.py` (a Serverless Function). This file imports and runs the FastAPI app.
 - **Frontend Requests**: All other requests are served from the `frontend/dist` directory built by Vite.
 - **WebSocket Fallback**: Vercel's Serverless Functions do not support persistent WebSockets. The real-time chat feature will detect the `VITE_USE_WS=false` flag and automatically fall back to fetching new messages every 3 seconds (HTTP Polling).

@@ -1,5 +1,6 @@
 from pydantic_settings import BaseSettings
 from typing import List
+import os
 
 
 class Settings(BaseSettings):
@@ -18,9 +19,8 @@ class Settings(BaseSettings):
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
-    
     # File Storage
-    UPLOAD_DIR: str = "./uploads"
+    UPLOAD_DIR: str = "/tmp/uploads" if os.environ.get("VERCEL") == "1" else "./uploads"
     MAX_UPLOAD_SIZE: int = 5242880  # 5MB
     ALLOWED_EXTENSIONS: str = "jpg,jpeg,png,webp"
     MAX_PHOTOS_PER_PROFILE: int = 6

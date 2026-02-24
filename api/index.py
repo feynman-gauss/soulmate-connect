@@ -1,7 +1,4 @@
-import sys
-import os
-
-# Add the backend directory to the Python path
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'backend'))
-
 from app.main import app
+
+# This file is used by Vercel serverless functions to mount the FastAPI application.
+# Since it is located at api/index.py, Vercel will attempt to serve it when routes are rewritten to it.
