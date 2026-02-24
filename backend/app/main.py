@@ -1,9 +1,8 @@
 """FastAPI application entry point"""
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from app.config import settings
-from app.database import connect_to_mongo, close_mongo_connection, connect_to_redis, close_redis_connection
+from app.database import connect_to_mongo, close_mongo_connection
 from app.api.v1 import auth, profiles, discover, matches, chat, search, notifications
 from pathlib import Path
 
@@ -32,23 +31,6 @@ app = FastAPI(
     openapi_url="/api/openapi.json"
 )
 
-# CORS middleware - Allow all origins in development, configured origins in production
-if settings.DEBUG:
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=["*"],
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
-else:
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=settings.cors_origins_list,
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
 
 # Add request logging middleware (logs all requests/responses with timing)
 app.add_middleware(RequestLoggingMiddleware)
@@ -71,7 +53,6 @@ async def startup_event():
     """Initialize database connections on startup"""
     logger.info("Starting up application...")
     await connect_to_mongo()
-    await connect_to_redis()
     logger.info("Application started successfully")
 
 
@@ -81,7 +62,6 @@ async def shutdown_event():
     """Close database connections on shutdown"""
     logger.info("Shutting down application...")
     await close_mongo_connection()
-    await close_redis_connection()
     logger.info("Application shut down successfully")
 
 

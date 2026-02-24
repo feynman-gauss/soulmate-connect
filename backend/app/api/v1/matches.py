@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from motor.motor_asyncio import AsyncIOMotorDatabase
+from pymongo.asynchronous.database import AsyncDatabase
 from app.database import get_database
 from app.schemas.match import MatchResponse, MatchListResponse
 from app.utils.security import get_current_user
@@ -26,14 +26,14 @@ def serialize_user(user: dict) -> dict:
 @router.get("/requests")
 async def get_received_requests(
     current_user: dict = Depends(get_current_user),
-    db: AsyncIOMotorDatabase = Depends(get_database)
+    db: AsyncDatabase = Depends(get_database)
 ):
     """Get pending match requests received by current user"""
     
     requests = await db.match_requests.find({
         "to_user_id": current_user["_id"],
         "status": "pending"
-    }).sort("created_at", -1).to_list(length=None)
+    }).sort("created_at", -1).to_list()
     
     result = []
     for req in requests:
@@ -55,13 +55,13 @@ async def get_received_requests(
 @router.get("/requests/sent")
 async def get_sent_requests(
     current_user: dict = Depends(get_current_user),
-    db: AsyncIOMotorDatabase = Depends(get_database)
+    db: AsyncDatabase = Depends(get_database)
 ):
     """Get match requests sent by current user"""
     
     requests = await db.match_requests.find({
         "from_user_id": current_user["_id"]
-    }).sort("created_at", -1).to_list(length=None)
+    }).sort("created_at", -1).to_list()
     
     result = []
     for req in requests:
@@ -84,7 +84,7 @@ async def get_sent_requests(
 async def accept_request(
     request_id: str,
     current_user: dict = Depends(get_current_user),
-    db: AsyncIOMotorDatabase = Depends(get_database)
+    db: AsyncDatabase = Depends(get_database)
 ):
     """Accept a match request"""
     
@@ -164,7 +164,7 @@ async def accept_request(
 async def reject_request(
     request_id: str,
     current_user: dict = Depends(get_current_user),
-    db: AsyncIOMotorDatabase = Depends(get_database)
+    db: AsyncDatabase = Depends(get_database)
 ):
     """Reject a match request"""
     
@@ -211,7 +211,7 @@ async def reject_request(
 @router.get("", response_model=List[MatchResponse])
 async def get_matches(
     current_user: dict = Depends(get_current_user),
-    db: AsyncIOMotorDatabase = Depends(get_database)
+    db: AsyncDatabase = Depends(get_database)
 ):
     """Get all matches for current user"""
     
@@ -222,7 +222,7 @@ async def get_matches(
             {"user2_id": current_user["_id"]}
         ],
         "is_active": True
-    }).sort("matched_at", -1).to_list(length=None)
+    }).sort("matched_at", -1).to_list()
     
     # Get other user profiles
     result = []
@@ -256,7 +256,7 @@ async def get_matches(
 async def get_match(
     match_id: str,
     current_user: dict = Depends(get_current_user),
-    db: AsyncIOMotorDatabase = Depends(get_database)
+    db: AsyncDatabase = Depends(get_database)
 ):
     """Get specific match details"""
     
@@ -311,7 +311,7 @@ async def get_match(
 async def unmatch(
     match_id: str,
     current_user: dict = Depends(get_current_user),
-    db: AsyncIOMotorDatabase = Depends(get_database)
+    db: AsyncDatabase = Depends(get_database)
 ):
     """Unmatch with a user"""
     

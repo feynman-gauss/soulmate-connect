@@ -19,34 +19,21 @@ services:
     networks:
       - soulmate_network
 
-  # MongoDB
-  mongodb:
-    image: mongo:7.0
-    container_name: soulmate_mongodb
-    restart: always
-    ports:
-      - "127.0.0.1:27017:27017"
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: admin
-      MONGO_INITDB_ROOT_PASSWORD: admin123
-      MONGO_INITDB_DATABASE: soulmate_connect
-    volumes:
-      - mongodb_data:/data/db
-    networks:
-      - soulmate_network
-
-  # Redis
-  redis:
-    image: redis:7-alpine
-    container_name: soulmate_redis
-    restart: always
-    command: redis-server --requirepass redis123
-    ports:
-      - "127.0.0.1:6379:6379"
-    volumes:
-      - redis_data:/data
-    networks:
-      - soulmate_network
+  # MongoDB (Commented out as we are using Atlas)
+  # mongodb:
+  #   image: mongo:7.0
+  #   container_name: soulmate_mongodb
+  #   restart: always
+  #   ports:
+  #     - "127.0.0.1:27017:27017"
+  #   environment:
+  #     MONGO_INITDB_ROOT_USERNAME: admin
+  #     MONGO_INITDB_ROOT_PASSWORD: admin123
+  #     MONGO_INITDB_DATABASE: soulmate_connect
+  #   volumes:
+  #     - mongodb_data:/data/db
+  #   networks:
+  #     - soulmate_network
 
   # FastAPI Backend
   backend:
@@ -56,17 +43,15 @@ services:
     container_name: soulmate_backend
     restart: always
     environment:
-      - MONGODB_URL=mongodb://admin:admin123@mongodb:27017
-      - REDIS_URL=redis://:redis123@redis:6379
+      - MONGODB_URL=mongodb+srv://test:li8y5AC07hp496Dy@soulmate.hvef7sa.mongodb.net/
       - DEBUG=True
       - ENVIRONMENT=development
       - CORS_ORIGINS=http://localhost,http://localhost:80
     volumes:
       - ./backend/uploads:/app/uploads
       - ./backend/logs:/app/logs
-    depends_on:
-      - mongodb
-      - redis
+    # depends_on:
+    #   - mongodb
     networks:
       - soulmate_network
 
@@ -82,7 +67,6 @@ services:
 
 volumes:
   mongodb_data:
-  redis_data:
 
 
 networks:

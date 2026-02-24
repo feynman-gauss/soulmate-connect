@@ -1,5 +1,5 @@
-from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
-from redis import asyncio as aioredis
+from pymongo import AsyncMongoClient
+from pymongo.asynchronous.database import AsyncDatabase
 from app.config import settings
 import logging
 
@@ -7,9 +7,8 @@ logger = logging.getLogger(__name__)
 
 
 class Database:
-    client: AsyncIOMotorClient = None
-    db: AsyncIOMotorDatabase = None
-    redis_client: aioredis.Redis = None
+    client: AsyncMongoClient = None
+    db: AsyncDatabase = None
 
 
 db = Database()
@@ -19,7 +18,7 @@ async def connect_to_mongo():
     """Connect to MongoDB"""
     try:
         logger.info("Connecting to MongoDB...")
-        db.client = AsyncIOMotorClient(settings.MONGODB_URL)
+        db.client = AsyncMongoClient(settings.MONGODB_URL)
         db.db = db.client[settings.MONGODB_DB_NAME]
         
         # Test connection
@@ -43,34 +42,6 @@ async def close_mongo_connection():
         logger.info("MongoDB connection closed")
     except Exception as e:
         logger.error(f"Error closing MongoDB connection: {e}")
-
-
-async def connect_to_redis():
-    """Connect to Redis"""
-    try:
-        logger.info("Connecting to Redis...")
-        db.redis_client = await aioredis.from_url(
-            settings.REDIS_URL,
-            encoding="utf-8",
-            decode_responses=True
-        )
-        # Test connection
-        await db.redis_client.ping()
-        logger.info("Successfully connected to Redis")
-    except Exception as e:
-        logger.error(f"Failed to connect to Redis: {e}")
-        # Redis is optional, so we don't raise
-
-
-async def close_redis_connection():
-    """Close Redis connection"""
-    try:
-        logger.info("Closing Redis connection...")
-        if db.redis_client:
-            await db.redis_client.close()
-        logger.info("Redis connection closed")
-    except Exception as e:
-        logger.error(f"Error closing Redis connection: {e}")
 
 
 async def create_indexes():
@@ -117,11 +88,6 @@ async def create_indexes():
         logger.error(f"Error creating indexes: {e}")
 
 
-def get_database() -> AsyncIOMotorDatabase:
+def get_database() -> AsyncDatabase:
     """Dependency to get database instance"""
     return db.db
-
-
-def get_redis() -> aioredis.Redis:
-    """Dependency to get Redis instance"""
-    return db.redis_client

@@ -84,7 +84,6 @@ Key configurations needed:
 ```env
 JWT_SECRET_KEY=your-super-secret-key-change-this-in-production
 MONGODB_URL=mongodb://localhost:27017
-REDIS_URL=redis://localhost:6379
 CORS_ORIGINS=http://localhost:5173,http://localhost:3000
 ```
 

@@ -30,10 +30,9 @@ if (-not (Test-Path .env)) {
 Write-Host "`n✨ Setup complete!" -ForegroundColor Green
 Write-Host ""
 Write-Host "Next steps:" -ForegroundColor Cyan
-Write-Host "1. Edit .env file with your MongoDB and Redis URLs" -ForegroundColor White
+Write-Host "1. Edit .env file with your MongoDB URL" -ForegroundColor White
 Write-Host "2. Start MongoDB: docker run -d -p 27017:27017 mongo:7.0" -ForegroundColor White
-Write-Host "3. Start Redis: docker run -d -p 6379:6379 redis:7-alpine" -ForegroundColor White
-Write-Host "4. Run the app: uvicorn app.main:app --reload" -ForegroundColor White
+Write-Host "3. Run the app: uvicorn app.main:app --reload" -ForegroundColor White
 Write-Host ""
 Write-Host "Or use Docker Compose:" -ForegroundColor Cyan
 Write-Host "docker-compose up -d" -ForegroundColor White

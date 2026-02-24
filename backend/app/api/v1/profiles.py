@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
-from motor.motor_asyncio import AsyncIOMotorDatabase
+from pymongo.asynchronous.database import AsyncDatabase
 from app.database import get_database
 from app.schemas.user import UserUpdate, UserProfileResponse, PreferencesSchema
 from app.utils.security import get_current_user
@@ -64,7 +64,7 @@ def calculate_profile_completion(user: dict) -> int:
 @router.get("/me", response_model=UserProfileResponse)
 async def get_my_profile(
     current_user: dict = Depends(get_current_user),
-    db: AsyncIOMotorDatabase = Depends(get_database)
+    db: AsyncDatabase = Depends(get_database)
 ):
     """Get current user's profile"""
     # Recalculate profile completion
@@ -84,7 +84,7 @@ async def get_my_profile(
 async def update_my_profile(
     profile_data: UserUpdate,
     current_user: dict = Depends(get_current_user),
-    db: AsyncIOMotorDatabase = Depends(get_database)
+    db: AsyncDatabase = Depends(get_database)
 ):
     """Update current user's profile"""
     from datetime import datetime
@@ -117,7 +117,7 @@ async def update_my_profile(
 async def get_user_profile(
     user_id: str,
     current_user: dict = Depends(get_current_user),
-    db: AsyncIOMotorDatabase = Depends(get_database)
+    db: AsyncDatabase = Depends(get_database)
 ):
     """Get another user's profile"""
     try:
@@ -161,7 +161,7 @@ async def get_user_profile(
 async def upload_photo(
     file: UploadFile = File(...),
     current_user: dict = Depends(get_current_user),
-    db: AsyncIOMotorDatabase = Depends(get_database)
+    db: AsyncDatabase = Depends(get_database)
 ):
     """Upload a profile photo - stores as base64 in database"""
     import base64
@@ -230,7 +230,7 @@ async def upload_photo(
 async def delete_photo(
     photo_index: int,
     current_user: dict = Depends(get_current_user),
-    db: AsyncIOMotorDatabase = Depends(get_database)
+    db: AsyncDatabase = Depends(get_database)
 ):
     """Delete a profile photo"""
     
@@ -265,7 +265,7 @@ async def delete_photo(
 async def update_preferences(
     preferences: PreferencesSchema,
     current_user: dict = Depends(get_current_user),
-    db: AsyncIOMotorDatabase = Depends(get_database)
+    db: AsyncDatabase = Depends(get_database)
 ):
     """Update match preferences"""
     

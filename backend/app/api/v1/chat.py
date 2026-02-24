@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query
-from motor.motor_asyncio import AsyncIOMotorDatabase
+from pymongo.asynchronous.database import AsyncDatabase
 from app.database import get_database
 from app.schemas.message import MessageCreate, MessageResponse, MessageListResponse, ConversationResponse
 from app.utils.security import get_current_user
@@ -22,7 +22,7 @@ def serialize_user(user: dict) -> dict:
 @router.get("/conversations", response_model=List[ConversationResponse])
 async def get_conversations(
     current_user: dict = Depends(get_current_user),
-    db: AsyncIOMotorDatabase = Depends(get_database)
+    db: AsyncDatabase = Depends(get_database)
 ):
     """Get all conversations (matches with messages)"""
     
@@ -33,7 +33,7 @@ async def get_conversations(
             {"user2_id": current_user["_id"]}
         ],
         "is_active": True
-    }).sort("last_message_at", -1).to_list(length=None)
+    }).sort("last_message_at", -1).to_list()
     
     conversations = []
     for match in matches:
@@ -62,7 +62,7 @@ async def get_messages(
     limit: int = Query(default=50, le=100),
     skip: int = Query(default=0, ge=0),
     current_user: dict = Depends(get_current_user),
-    db: AsyncIOMotorDatabase = Depends(get_database)
+    db: AsyncDatabase = Depends(get_database)
 ):
     """Get messages for a specific match"""
     
@@ -90,7 +90,7 @@ async def get_messages(
     # Get messages
     messages = await db.messages.find({
         "match_id": ObjectId(match_id)
-    }).sort("created_at", -1).skip(skip).limit(limit).to_list(length=None)
+    }).sort("created_at", -1).skip(skip).limit(limit).to_list()
     
     # Reverse to get chronological order
     messages.reverse()
@@ -118,7 +118,7 @@ async def send_message(
     match_id: str,
     message_data: MessageCreate,
     current_user: dict = Depends(get_current_user),
-    db: AsyncIOMotorDatabase = Depends(get_database)
+    db: AsyncDatabase = Depends(get_database)
 ):
     """Send a message"""
     
@@ -218,7 +218,7 @@ async def send_message(
 async def mark_messages_as_read(
     match_id: str,
     current_user: dict = Depends(get_current_user),
-    db: AsyncIOMotorDatabase = Depends(get_database)
+    db: AsyncDatabase = Depends(get_database)
 ):
     """Mark all messages in a conversation as read"""
     

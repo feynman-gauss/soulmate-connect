@@ -10,11 +10,8 @@ class Settings(BaseSettings):
     ENVIRONMENT: str = "development"
     
     # Database
-    MONGODB_URL: str = "mongodb://localhost:27017"
+    MONGODB_URL: str
     MONGODB_DB_NAME: str = "soulmate_connect"
-    
-    # Redis
-    REDIS_URL: str = "redis://localhost:6379"
     
     # JWT
     JWT_SECRET_KEY: str
@@ -45,8 +42,6 @@ class Settings(BaseSettings):
     RAZORPAY_KEY_ID: str = ""
     RAZORPAY_KEY_SECRET: str = ""
     
-    # CORS
-    CORS_ORIGINS: str = "http://localhost:5173,http://localhost:3000,http://localhost:8080"
     
     # Rate Limiting
     RATE_LIMIT_PER_MINUTE: int = 100
@@ -60,9 +55,6 @@ class Settings(BaseSettings):
     COMPATIBILITY_WEIGHTS_RELIGION: float = 0.10
     COMPATIBILITY_WEIGHTS_PROFILE_COMPLETION: float = 0.05
     
-    @property
-    def cors_origins_list(self) -> List[str]:
-        return [origin.strip() for origin in self.CORS_ORIGINS.split(",")]
     
     @property
     def allowed_extensions_list(self) -> List[str]:
@@ -71,6 +63,7 @@ class Settings(BaseSettings):
     class Config:
         env_file = ".env"
         case_sensitive = True
+        extra = "ignore"
 
 
 settings = Settings()

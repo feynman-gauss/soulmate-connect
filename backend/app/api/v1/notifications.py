@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from motor.motor_asyncio import AsyncIOMotorDatabase
+from pymongo.asynchronous.database import AsyncDatabase
 from app.database import get_database
 from app.schemas.notification import NotificationResponse, NotificationListResponse
 from app.utils.security import get_current_user
@@ -12,13 +12,13 @@ router = APIRouter(prefix="/notifications", tags=["Notifications"])
 @router.get("", response_model=List[NotificationResponse])
 async def get_notifications(
     current_user: dict = Depends(get_current_user),
-    db: AsyncIOMotorDatabase = Depends(get_database)
+    db: AsyncDatabase = Depends(get_database)
 ):
     """Get all notifications for current user"""
     
     notifications = await db.notifications.find({
         "user_id": current_user["_id"]
-    }).sort("created_at", -1).limit(50).to_list(length=None)
+    }).sort("created_at", -1).limit(50).to_list()
     
     result = []
     for notif in notifications:
@@ -40,7 +40,7 @@ async def get_notifications(
 async def mark_notification_as_read(
     notification_id: str,
     current_user: dict = Depends(get_current_user),
-    db: AsyncIOMotorDatabase = Depends(get_database)
+    db: AsyncDatabase = Depends(get_database)
 ):
     """Mark a notification as read"""
     
@@ -75,7 +75,7 @@ async def mark_notification_as_read(
 @router.put("/read-all")
 async def mark_all_notifications_as_read(
     current_user: dict = Depends(get_current_user),
-    db: AsyncIOMotorDatabase = Depends(get_database)
+    db: AsyncDatabase = Depends(get_database)
 ):
     """Mark all notifications as read"""
     
@@ -94,7 +94,7 @@ async def mark_all_notifications_as_read(
 async def delete_notification(
     notification_id: str,
     current_user: dict = Depends(get_current_user),
-    db: AsyncIOMotorDatabase = Depends(get_database)
+    db: AsyncDatabase = Depends(get_database)
 ):
     """Delete a notification"""
     
@@ -126,7 +126,7 @@ async def delete_notification(
 @router.get("/unread/count")
 async def get_unread_count(
     current_user: dict = Depends(get_current_user),
-    db: AsyncIOMotorDatabase = Depends(get_database)
+    db: AsyncDatabase = Depends(get_database)
 ):
     """Get count of unread notifications"""
     

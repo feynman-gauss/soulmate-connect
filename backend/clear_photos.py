@@ -1,12 +1,21 @@
 """Clear old photos from test user"""
 import asyncio
-from motor.motor_asyncio import AsyncIOMotorClient
+from pymongo import AsyncMongoClient
 
-MONGODB_URL = "mongodb://admin:admin123@localhost:27017"
-DATABASE_NAME = "soulmate_connect"
+import os
+import sys
+
+# Add the current directory to sys.path to allow importing from app
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
+from app.config import settings
+
+MONGODB_URL = settings.MONGODB_URL
+DATABASE_NAME = settings.MONGODB_DB_NAME
 
 async def clear_photos():
-    client = AsyncIOMotorClient(MONGODB_URL)
+    client = AsyncMongoClient(
+MONGODB_URL)
     db = client[DATABASE_NAME]
     
     # Clear photos for male1 user

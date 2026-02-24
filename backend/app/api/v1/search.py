@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, Query
-from motor.motor_asyncio import AsyncIOMotorDatabase
+from pymongo.asynchronous.database import AsyncDatabase
 from app.database import get_database
 from app.utils.security import get_current_user
 from typing import List, Optional
@@ -27,7 +27,7 @@ async def search_profiles(
     location: Optional[str] = None,
     limit: int = Query(default=20, le=50),
     current_user: dict = Depends(get_current_user),
-    db: AsyncIOMotorDatabase = Depends(get_database)
+    db: AsyncDatabase = Depends(get_database)
 ):
     """Search profiles with filters"""
     
@@ -77,7 +77,7 @@ async def search_profiles(
         ]
     
     # Execute search
-    profiles = await db.users.find(search_filter).limit(limit).to_list(length=None)
+    profiles = await db.users.find(search_filter).limit(limit).to_list()
     
     return {
         "results": [serialize_user(profile) for profile in profiles],
@@ -88,7 +88,7 @@ async def search_profiles(
 @router.get("/suggestions")
 async def get_search_suggestions(
     current_user: dict = Depends(get_current_user),
-    db: AsyncIOMotorDatabase = Depends(get_database)
+    db: AsyncDatabase = Depends(get_database),
 ):
     """Get search suggestions (popular locations, educations, etc.)"""
     
@@ -111,9 +111,9 @@ async def get_search_suggestions(
         {"$limit": 10}
     ]
     
-    locations = await db.users.aggregate(pipeline_location).to_list(length=None)
-    educations = await db.users.aggregate(pipeline_education).to_list(length=None)
-    occupations = await db.users.aggregate(pipeline_occupation).to_list(length=None)
+    locations = await db.users.aggregate(pipeline_location).to_list()
+    educations = await db.users.aggregate(pipeline_education).to_list()
+    occupations = await db.users.aggregate(pipeline_occupation).to_list()
     
     return {
         "locations": [loc["_id"] for loc in locations if loc["_id"]],

@@ -1,12 +1,20 @@
 """Test discover query"""
 import asyncio
-from motor.motor_asyncio import AsyncIOMotorClient
+from pymongo.asynchronous import AsyncMongoClient
 
-MONGODB_URL = "mongodb://admin:admin123@localhost:27017"
-DATABASE_NAME = "soulmate_connect"
+import os
+import sys
+
+# Add the current directory to sys.path to allow importing from app
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
+from app.config import settings
+
+MONGODB_URL = settings.MONGODB_URL
+DATABASE_NAME = settings.MONGODB_DB_NAME
 
 async def test_discover():
-    client = AsyncIOMotorClient(MONGODB_URL)
+    client = AsyncMongoClient(MONGODB_URL)
     db = client[DATABASE_NAME]
     
     # Get a male user
@@ -40,14 +48,14 @@ async def test_discover():
     print(f"\n🔍 Query filter: {filter_query}")
     
     # Get matching profiles
-    matches = await db.users.find(filter_query).limit(10).to_list(length=None)
+    matches = await db.users.find(filter_query).limit(10).to_list()
     print(f"\n✅ Found {len(matches)} matching female profiles:")
     
     for m in matches:
         print(f"   - {m['name']}, Age: {m['age']}, Gender: {m['gender']}")
     
     # Check if age range is too restrictive
-    all_females = await db.users.find({"gender": "female"}).to_list(length=None)
+    all_females = await db.users.find({"gender": "female"}).to_list()
     print(f"\n📋 All female ages:")
     for f in all_females:
         in_range = age_range["min"] <= f["age"] <= age_range["max"]

@@ -2,19 +2,27 @@
 Quick seed script for test users - uses Docker internal MongoDB connection
 """
 import asyncio
-from motor.motor_asyncio import AsyncIOMotorClient
+from pymongo import AsyncMongoClient
 from datetime import datetime
 import bcrypt
 
-# Docker internal connection
-MONGODB_URL = "mongodb://admin:admin123@mongodb:27017"
-DATABASE_NAME = "soulmate_connect"
+import os
+import sys
+
+# Add the current directory to sys.path to allow importing from app
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
+from app.config import settings
+
+# Database connection
+MONGODB_URL = settings.MONGODB_URL
+DATABASE_NAME = settings.MONGODB_DB_NAME
 
 def hash_password(password: str) -> str:
     return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
 async def seed():
-    client = AsyncIOMotorClient(MONGODB_URL)
+    client = AsyncMongoClient(MONGODB_URL)
     db = client[DATABASE_NAME]
     
     # Check if users exist

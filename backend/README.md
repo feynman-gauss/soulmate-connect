@@ -1,6 +1,6 @@
 # Soulmate Connect - Backend API
 
-A modern, scalable backend API for the Soulmate Connect matrimonial platform built with FastAPI, MongoDB, and Redis.
+A modern, scalable backend API for the Soulmate Connect matrimonial platform built with FastAPI and MongoDB.
 
 ## 🚀 Features
 
@@ -16,7 +16,6 @@ A modern, scalable backend API for the Soulmate Connect matrimonial platform bui
 
 - **FastAPI** - Modern Python web framework
 - **MongoDB** - NoSQL database for flexible data storage
-- **Redis** - Caching and session management
 - **Motor** - Async MongoDB driver
 - **PyJWT** - JWT authentication
 - **Passlib** - Password hashing
@@ -26,7 +25,6 @@ A modern, scalable backend API for the Soulmate Connect matrimonial platform bui
 
 - Python 3.11+
 - MongoDB 7.0+
-- Redis 7.0+
 - Docker & Docker Compose (optional)
 
 ## 🔧 Installation
@@ -55,11 +53,10 @@ cp .env.example .env
 # Edit .env with your configuration
 ```
 
-5. **Start MongoDB and Redis**
+5. **Start MongoDB**
 ```bash
 # Using Docker
 docker run -d -p 27017:27017 --name mongodb mongo:7.0
-docker run -d -p 6379:6379 --name redis redis:7-alpine
 ```
 
 6. **Run the application**
@@ -209,12 +206,11 @@ pytest --cov=app tests/
 1. ✅ Set `DEBUG=False` in environment
 2. ✅ Use strong `JWT_SECRET_KEY`
 3. ✅ Configure MongoDB authentication
-4. ✅ Set up Redis password
-5. ✅ Configure CORS origins
-6. ✅ Set up SSL/TLS certificates
-7. ✅ Configure file storage (S3)
-8. ✅ Set up monitoring and logging
-9. ✅ Configure backup strategy
+4. ✅ Configure CORS origins
+5. ✅ Set up SSL/TLS certificates
+6. ✅ Configure file storage (S3)
+7. ✅ Set up monitoring and logging
+8. ✅ Configure backup strategy
 
 ### Deploy with Docker
 

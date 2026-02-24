@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query
-from motor.motor_asyncio import AsyncIOMotorDatabase
+from pymongo.asynchronous.database import AsyncDatabase
 from app.database import get_database
 from app.schemas.match import SwipeCreate, SwipeResponse, MatchResponse, MatchListResponse
 from app.schemas.user import UserProfileResponse
@@ -69,14 +69,14 @@ def calculate_compatibility_score(user: dict, target: dict) -> float:
 async def get_discovery_profiles(
     limit: int = Query(default=20, le=50),
     current_user: dict = Depends(get_current_user),
-    db: AsyncIOMotorDatabase = Depends(get_database)
+    db: AsyncDatabase = Depends(get_database)
 ):
     """Get profiles for discovery feed"""
     
     # Get user's swiped profiles
     swiped = await db.swipes.find(
         {"user_id": current_user["_id"]}
-    ).to_list(length=None)
+    ).to_list()
     
     swiped_ids = [swipe["target_user_id"] for swipe in swiped]
     swiped_ids.append(current_user["_id"])  # Exclude self
@@ -112,7 +112,7 @@ async def get_discovery_profiles(
         filter_query["education"] = {"$in": prefs["education"]}
     
     # Get potential matches
-    potential_matches = await db.users.find(filter_query).limit(limit * 2).to_list(length=None)
+    potential_matches = await db.users.find(filter_query).limit(limit * 2).to_list()
     
     # Calculate compatibility scores and sort
     scored_profiles = []
@@ -137,7 +137,7 @@ async def get_discovery_profiles(
 async def create_swipe(
     swipe_data: SwipeCreate,
     current_user: dict = Depends(get_current_user),
-    db: AsyncIOMotorDatabase = Depends(get_database)
+    db: AsyncDatabase = Depends(get_database)
 ):
     """Swipe on a profile (like/pass/super_like)"""
     
@@ -315,7 +315,7 @@ async def create_swipe(
 @router.get("/likes/received")
 async def get_received_likes(
     current_user: dict = Depends(get_current_user),
-    db: AsyncIOMotorDatabase = Depends(get_database)
+    db: AsyncDatabase = Depends(get_database)
 ):
     """Get users who liked you (premium feature)"""
     
@@ -336,11 +336,11 @@ async def get_received_likes(
     likes = await db.swipes.find({
         "target_user_id": current_user["_id"],
         "action": {"$in": ["like", "super_like"]}
-    }).sort("created_at", -1).to_list(length=50)
+    }).sort("created_at", -1).to_list()
     
     # Get user profiles
     user_ids = [like["user_id"] for like in likes]
-    users = await db.users.find({"_id": {"$in": user_ids}}).to_list(length=None)
+    users = await db.users.find({"_id": {"$in": user_ids}}).to_list()
     
     return {
         "count": len(likes),

@@ -2,7 +2,7 @@ from fastapi import WebSocket, WebSocketDisconnect, Depends
 from typing import Dict, Set
 from app.utils.security import decode_token
 from app.database import get_database
-from motor.motor_asyncio import AsyncIOMotorDatabase
+from pymongo.asynchronous.database import AsyncDatabase
 from bson import ObjectId
 import json
 import logging
@@ -64,7 +64,7 @@ manager = ConnectionManager()
 async def websocket_endpoint(
     websocket: WebSocket,
     token: str,
-    db: AsyncIOMotorDatabase = Depends(get_database)
+    db: AsyncDatabase = Depends(get_database)
 ):
     """WebSocket endpoint for real-time chat"""
     

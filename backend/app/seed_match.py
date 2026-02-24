@@ -1,15 +1,23 @@
 import asyncio
-from motor.motor_asyncio import AsyncIOMotorClient
+from pymongo import AsyncMongoClient
 from datetime import datetime
 from bson import ObjectId
 
 # MongoDB URL
 import os
-MONGO_URL = os.getenv("MONGODB_URL", "mongodb://admin:admin123@localhost:27017")
-DB_NAME = "soulmate_connect"
+import sys
+
+# Add the current directory to sys.path to allow importing from app
+# Since this is in app/seed_match.py, we need to go up one level to import app
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from app.config import settings
+
+MONGO_URL = settings.MONGODB_URL
+DB_NAME = settings.MONGODB_DB_NAME
 
 async def seed_match():
-    client = AsyncIOMotorClient(MONGO_URL)
+    client = AsyncMongoClient(MONGO_URL)
     db = client[DB_NAME]
     
     print("Connected to MongoDB...")

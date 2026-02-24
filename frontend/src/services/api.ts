@@ -6,18 +6,21 @@ const getApiBaseUrl = (): string => {
         return import.meta.env.VITE_API_URL;
     }
 
-    // In production or when accessing from other devices, use relative URL or same hostname
-    const { hostname, protocol } = window.location;
+    // In production or when accessing from other devices, use the same hostname/port
+    const { hostname, protocol, port } = window.location;
 
-    // If accessing from localhost, use localhost backend
-    if (hostname === 'localhost' || hostname === '127.0.0.1') {
-        return 'http://localhost:8000/api/v1';
+    // If we're on port 8000, we're likely talking to the backend directly in dev
+    if (port === '8000') {
+        return `${protocol}//${hostname}:8000/api/v1`;
     }
 
-    // For cloud deployments or other devices on the network:
-    // - If VITE_API_URL is set in production build, it will be used above
-    // - Otherwise, assume backend is on port 8000 of the same host
-    return `${protocol}//${hostname}:8000/api/v1`;
+    // If we're on port 5173 (standard Vite dev port), we likely want to hit 8000
+    if (port === '5173') {
+        return `${protocol}//${hostname}:8000/api/v1`;
+    }
+
+    // Otherwise (e.g., when served via Nginx on port 80/8080), use relative URL
+    return '/api/v1';
 };
 
 const API_BASE_URL = getApiBaseUrl();
@@ -377,7 +380,16 @@ export const createChatWebSocket = (onMessage: (data: any) => void) => {
     const token = getAuthToken();
     if (!token) throw new Error('No auth token');
 
-    const wsUrl = API_BASE_URL.replace('http', 'ws').replace('/api/v1', '');
+    let wsUrl;
+    if (API_BASE_URL.startsWith('http')) {
+        wsUrl = API_BASE_URL.replace('http', 'ws').replace('/api/v1', '');
+    } else {
+        // Handle relative URL (e.g. /api/v1)
+        const { protocol, host } = window.location;
+        const wsProtocol = protocol === 'https:' ? 'wss:' : 'ws:';
+        wsUrl = `${wsProtocol}//${host}`;
+    }
+    
     const ws = new WebSocket(`${wsUrl}/ws/chat?token=${token}`);
 
     ws.onopen = () => {

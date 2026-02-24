@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from motor.motor_asyncio import AsyncIOMotorDatabase
+from pymongo.asynchronous.database import AsyncDatabase
 from app.database import get_database
 from app.schemas.user import UserRegister, UserLogin, TokenResponse, UserResponse, PasswordReset
 from app.utils.security import (
@@ -27,7 +27,7 @@ def serialize_user(user: dict) -> dict:
 @router.post("/register", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
 async def register(
     user_data: UserRegister,
-    db: AsyncIOMotorDatabase = Depends(get_database)
+    db: AsyncDatabase = Depends(get_database)
 ):
     """Register a new user"""
     
@@ -94,7 +94,7 @@ async def register(
 @router.post("/login", response_model=TokenResponse)
 async def login(
     credentials: UserLogin,
-    db: AsyncIOMotorDatabase = Depends(get_database)
+    db: AsyncDatabase = Depends(get_database)
 ):
     """Login user"""
     
@@ -161,7 +161,7 @@ async def logout(current_user: dict = Depends(get_current_user)):
 @router.post("/refresh")
 async def refresh_token(
     refresh_token: str,
-    db: AsyncIOMotorDatabase = Depends(get_database)
+    db: AsyncDatabase = Depends(get_database)
 ):
     """Refresh access token"""
     from app.utils.security import decode_token
@@ -204,7 +204,7 @@ async def refresh_token(
 @router.post("/forgot-password")
 async def forgot_password(
     data: PasswordReset,
-    db: AsyncIOMotorDatabase = Depends(get_database)
+    db: AsyncDatabase = Depends(get_database)
 ):
     """Request password reset"""
     user = await db.users.find_one({"email": data.email})

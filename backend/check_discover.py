@@ -1,19 +1,27 @@
 """Check discover API results directly"""
 import asyncio
-from motor.motor_asyncio import AsyncIOMotorClient
+from pymongo.asynchronous import AsyncMongoClient
 
-MONGODB_URL = "mongodb://admin:admin123@localhost:27017"
-DATABASE_NAME = "soulmate_connect"
+import os
+import sys
+
+# Add the current directory to sys.path to allow importing from app
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
+from app.config import settings
+
+MONGODB_URL = settings.MONGODB_URL
+DATABASE_NAME = settings.MONGODB_DB_NAME
 
 async def check_discover():
-    client = AsyncIOMotorClient(MONGODB_URL)
+    client = AsyncMongoClient(MONGODB_URL)
     db = client[DATABASE_NAME]
     
     # Get Aarav
     aarav = await db.users.find_one({"email": "male1@test.com"})
     
     # Get swiped IDs
-    swiped = await db.swipes.find({"user_id": aarav["_id"]}).to_list(length=None)
+    swiped = await db.swipes.find({"user_id": aarav["_id"]}).to_list()
     swiped_ids = [s["target_user_id"] for s in swiped]
     swiped_ids.append(aarav["_id"])  # Exclude self
     
@@ -36,7 +44,7 @@ async def check_discover():
     print(f"\nFilter query: {filter_query}")
     
     # Get all matching users
-    matches = await db.users.find(filter_query).to_list(length=None)
+    matches = await db.users.find(filter_query).to_list()
     
     print(f"\n✅ Found {len(matches)} matching profiles:")
     for m in matches:

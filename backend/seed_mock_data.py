@@ -3,14 +3,22 @@ Script to seed MongoDB with mock user data for testing
 Run from backend directory: python seed_mock_data.py
 """
 import asyncio
-from motor.motor_asyncio import AsyncIOMotorClient
+from pymongo import AsyncMongoClient
 from datetime import datetime, timedelta
 import random
 import bcrypt
 
+import os
+import sys
+
+# Add the current directory to sys.path to allow importing from app
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
+from app.config import settings
+
 # MongoDB connection
-MONGODB_URL = "mongodb://admin:admin123@localhost:27017"
-DATABASE_NAME = "soulmate_connect"
+MONGODB_URL = settings.MONGODB_URL
+DATABASE_NAME = settings.MONGODB_DB_NAME
 
 def hash_password(password: str) -> str:
     """Hash password using bcrypt"""
@@ -78,7 +86,7 @@ SALARIES = ["5-10 LPA", "10-15 LPA", "15-20 LPA", "20-30 LPA", "30-50 LPA", "50+
 
 async def create_mock_users():
     # Connect to MongoDB
-    client = AsyncIOMotorClient(MONGODB_URL)
+    client = AsyncMongoClient(MONGODB_URL)
     db = client[DATABASE_NAME]
     
     # Clear existing mock users (optional - keeping real users)
