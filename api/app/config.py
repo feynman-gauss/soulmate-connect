@@ -20,7 +20,7 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
     # File Storage
-    UPLOAD_DIR: str = "/tmp/uploads" if os.environ.get("VERCEL") == "1" else "./uploads"
+    UPLOAD_DIR: str = "/tmp/uploads" if (os.environ.get("VERCEL") == "1" or os.environ.get("NOW_REGION")) else "./uploads"
     MAX_UPLOAD_SIZE: int = 5242880  # 5MB
     ALLOWED_EXTENSIONS: str = "jpg,jpeg,png,webp"
     MAX_PHOTOS_PER_PROFILE: int = 6

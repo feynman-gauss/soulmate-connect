@@ -45,7 +45,14 @@ logger.info("Logging middleware and exception handlers initialized")
 
 # Create uploads directory if it doesn't exist
 uploads_dir = Path(settings.UPLOAD_DIR)
-uploads_dir.mkdir(parents=True, exist_ok=True)
+try:
+    if not uploads_dir.exists():
+        logger.info(f"Creating uploads directory at {uploads_dir}")
+        uploads_dir.mkdir(parents=True, exist_ok=True)
+except OSError as e:
+    logger.warning(f"Could not create uploads directory at {uploads_dir}: {e}")
+    if not is_vercel:
+        raise
 
 # Mount static files for uploads
 app.mount("/uploads", StaticFiles(directory=settings.UPLOAD_DIR), name="uploads")
