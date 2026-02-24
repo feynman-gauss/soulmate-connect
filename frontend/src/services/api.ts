@@ -1,29 +1,6 @@
 // API Configuration and Service
-// Dynamically determine API URL based on environment and current hostname
-const getApiBaseUrl = (): string => {
-    // If explicitly set via environment variable, use that
-    if (import.meta.env.VITE_API_URL) {
-        return import.meta.env.VITE_API_URL;
-    }
-
-    // In production or when accessing from other devices, use the same hostname/port
-    const { hostname, protocol, port } = window.location;
-
-    // If we're on port 8000, we're likely talking to the backend directly in dev
-    if (port === '8000') {
-        return `${protocol}//${hostname}:8000/api/v1`;
-    }
-
-    // If we're on port 5173 (standard Vite dev port), we likely want to hit 8000
-    if (port === '5173') {
-        return `${protocol}//${hostname}:8000/api/v1`;
-    }
-
-    // Otherwise (e.g., when served via Nginx on port 80/8080), use relative URL
-    return '/api/v1';
-};
-
-const API_BASE_URL = getApiBaseUrl();
+// Use a relative path so both Vite proxy (dev) and Vercel (prod) route it to the backend correctly
+const API_BASE_URL = '/api/v1';
 
 // Helper function to get auth token
 const getAuthToken = () => {
@@ -389,7 +366,7 @@ export const createChatWebSocket = (onMessage: (data: any) => void) => {
         const wsProtocol = protocol === 'https:' ? 'wss:' : 'ws:';
         wsUrl = `${wsProtocol}//${host}`;
     }
-    
+
     const ws = new WebSocket(`${wsUrl}/ws/chat?token=${token}`);
 
     ws.onopen = () => {

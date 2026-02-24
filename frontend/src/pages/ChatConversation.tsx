@@ -65,28 +65,71 @@ export default function ChatConversation() {
 
     loadData();
 
-    // 3. Setup WebSocket
-    let ws: WebSocket;
-    try {
-      ws = createChatWebSocket((data) => {
-        // Handle incoming WebSocket messages
-        if (data.type === 'message.new' && data.match_id === id) {
-          // Standardize format
-          const incomingMsg = {
-            id: Date.now().toString(), // or data.message.id if available
-            content: data.message,
-            sender_id: data.sender_id,
-            created_at: new Date().toISOString()
-          };
-          setMessages(prev => [...prev, incomingMsg]);
+    // 3. Setup WebSocket or Fallback Polling
+    let ws: WebSocket | null = null;
+    let fallbackInterval: NodeJS.Timeout | null = null;
+
+    const startPolling = () => {
+      console.log('Using HTTP polling for chat (WebSocket unavailable)');
+      fallbackInterval = setInterval(async () => {
+        try {
+          const newMsgs = await api.chat.getMessages(id!);
+          // Only update if we have new messages to avoid cursor jumps
+          // Assuming backend returns latest messages
+          setMessages(prev => {
+            // Simple check: if lengths differ or last message ID differs
+            if (newMsgs.length !== prev.length ||
+              (newMsgs.length > 0 && prev.length > 0 && newMsgs[newMsgs.length - 1].id !== prev[prev.length - 1].id)) {
+              return newMsgs;
+            }
+            return prev;
+          });
+        } catch (e) {
+          console.error('Polling error:', e);
         }
-      });
-    } catch (e) {
-      console.error('WS Connection failed', e);
+      }, 3000); // Poll every 3 seconds
+    };
+
+    // Check if WS is explicitly disabled via env
+    const useWs = import.meta.env.VITE_USE_WS !== 'false';
+
+    if (useWs) {
+      try {
+        ws = createChatWebSocket((data) => {
+          // Handle incoming WebSocket messages
+          if (data.type === 'message.new' && data.match_id === id) {
+            // Standardize format
+            const incomingMsg = {
+              id: Date.now().toString(), // or data.message.id if available
+              content: data.message,
+              sender_id: data.sender_id,
+              created_at: new Date().toISOString()
+            };
+            setMessages(prev => [...prev, incomingMsg]);
+          }
+        });
+
+        // If WS closes cleanly or fails, fallback to polling
+        ws.onclose = () => {
+          console.log('WebSocket closed, falling back to polling');
+          if (!fallbackInterval) startPolling();
+        };
+
+        ws.onerror = () => {
+          console.error('WebSocket error, falling back to polling');
+          if (!fallbackInterval) startPolling();
+        }
+      } catch (e) {
+        console.error('WS Connection failed immediately', e);
+        startPolling();
+      }
+    } else {
+      startPolling();
     }
 
     return () => {
-      if (ws) ws.close();
+      if (ws && ws.readyState === WebSocket.OPEN) ws.close();
+      if (fallbackInterval) clearInterval(fallbackInterval);
     };
   }, [id]);
 
