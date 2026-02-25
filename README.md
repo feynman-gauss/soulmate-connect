@@ -67,7 +67,7 @@ soulmate-connect/
 │   │   ├── __init__.py             ✅ Fixed - exports added
 │   │   ├── main.py                 ✅ Fixed - WebSocket wired
 │   │   ├── config.py               ✅ Settings
-│   │   ├── database.py             ✅ MongoDB/Redis connection
+│   │   ├── database.py             ✅ MongoDB connection
 │   │   ├── api/v1/
 │   │   │   ├── __init__.py         ✅ Fixed - exports added
 │   │   │   ├── auth.py             ✅ Registration, login

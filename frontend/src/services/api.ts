@@ -1,26 +1,6 @@
 // API Configuration and Service
-// Dynamically determine API URL based on environment and current hostname
-const getApiBaseUrl = (): string => {
-    // If explicitly set via environment variable, use that
-    if (import.meta.env.VITE_API_URL) {
-        return import.meta.env.VITE_API_URL;
-    }
-
-    // In production or when accessing from other devices, use relative URL or same hostname
-    const { hostname, protocol } = window.location;
-
-    // If accessing from localhost, use localhost backend
-    if (hostname === 'localhost' || hostname === '127.0.0.1') {
-        return 'http://localhost:8000/api/v1';
-    }
-
-    // For cloud deployments or other devices on the network:
-    // - If VITE_API_URL is set in production build, it will be used above
-    // - Otherwise, assume backend is on port 8000 of the same host
-    return `${protocol}//${hostname}:8000/api/v1`;
-};
-
-const API_BASE_URL = getApiBaseUrl();
+// Use a relative path so both Vite proxy (dev) and Vercel (prod) route it to the backend correctly
+const API_BASE_URL = '/api/v1';
 
 // Helper function to get auth token
 const getAuthToken = () => {
@@ -377,7 +357,16 @@ export const createChatWebSocket = (onMessage: (data: any) => void) => {
     const token = getAuthToken();
     if (!token) throw new Error('No auth token');
 
-    const wsUrl = API_BASE_URL.replace('http', 'ws').replace('/api/v1', '');
+    let wsUrl;
+    if (API_BASE_URL.startsWith('http')) {
+        wsUrl = API_BASE_URL.replace('http', 'ws').replace('/api/v1', '');
+    } else {
+        // Handle relative URL (e.g. /api/v1)
+        const { protocol, host } = window.location;
+        const wsProtocol = protocol === 'https:' ? 'wss:' : 'ws:';
+        wsUrl = `${wsProtocol}//${host}`;
+    }
+
     const ws = new WebSocket(`${wsUrl}/ws/chat?token=${token}`);
 
     ws.onopen = () => {

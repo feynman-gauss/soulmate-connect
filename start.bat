@@ -7,8 +7,8 @@ echo ============================================
 echo.
 
 REM Check if we're in the right directory
-if not exist "backend" (
-    echo Error: backend folder not found. Please run from project root.
+if not exist "api" (
+    echo Error: api folder not found. Please run from project root.
     exit /b 1
 )
 
@@ -19,7 +19,7 @@ if not exist "frontend" (
 
 echo Starting Backend (FastAPI on port 8000)...
 echo.
-start cmd /k "cd backend && python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+start cmd /k "cd api && python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
 
 timeout /t 3 /nobreak
 

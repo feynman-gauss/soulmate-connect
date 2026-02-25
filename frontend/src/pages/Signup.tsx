@@ -7,6 +7,10 @@ import { Heart, Mail, Lock, User, ArrowLeft, Eye, EyeOff, Phone, MapPin, Users, 
 import { toast } from 'sonner';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar as CalendarComponent } from '@/components/ui/calendar';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
 import { api } from '@/services/api';
 
 // Tyagi Gotra options
@@ -275,17 +279,43 @@ export default function Signup() {
 
                 <div className="space-y-2">
                   <Label htmlFor="dob">Date of Birth *</Label>
-                  <div className="relative">
-                    <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input
-                      id="dob"
-                      type="date"
-                      value={formData.dateOfBirth}
-                      onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
-                      className="pl-12 glass-card border-white/10 h-12 rounded-xl"
-                      required
-                    />
-                  </div>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        className={cn(
+                          "w-full pl-12 justify-start text-left font-normal glass-card border-white/10 h-12 rounded-xl",
+                          !formData.dateOfBirth && "text-muted-foreground"
+                        )}
+                      >
+                        <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                        {formData.dateOfBirth ? (
+                          format(new Date(formData.dateOfBirth), "PPP")
+                        ) : (
+                          <span>Pick a date</span>
+                        )}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <CalendarComponent
+                        mode="single"
+                        captionLayout="dropdown-buttons"
+                        fromYear={1900}
+                        toYear={new Date().getFullYear()}
+                        selected={formData.dateOfBirth ? new Date(formData.dateOfBirth) : undefined}
+                        onSelect={(date) =>
+                          setFormData({
+                            ...formData,
+                            dateOfBirth: date ? format(date, "yyyy-MM-dd") : ''
+                          })
+                        }
+                        disabled={(date) =>
+                          date > new Date() || date < new Date("1900-01-01")
+                        }
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
                 </div>
 
                 <Button type="submit" variant="gradient" className="w-full" size="lg">Continue</Button>

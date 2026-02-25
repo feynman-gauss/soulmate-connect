@@ -1,8 +1,8 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap');
 
 @layer base {
   :root {
@@ -40,11 +40,11 @@
     --gradient-primary: linear-gradient(135deg, hsl(346, 77%, 65%) 0%, hsl(20, 80%, 60%) 50%, hsl(38, 92%, 60%) 100%);
     --gradient-card: linear-gradient(145deg, hsla(0, 0%, 100%, 0.08) 0%, hsla(0, 0%, 100%, 0.02) 100%);
     --gradient-hero: linear-gradient(180deg, hsl(346, 77%, 65%) 0%, hsl(20, 80%, 60%) 100%);
-    
+
     --glass-bg: hsla(0, 0%, 100%, 0.05);
     --glass-border: hsla(0, 0%, 100%, 0.1);
     --glass-shadow: 0 8px 32px hsla(0, 0%, 0%, 0.3);
-    
+
     --glow-primary: 0 0 40px hsla(346, 77%, 65%, 0.4);
     --glow-accent: 0 0 40px hsla(20, 80%, 60%, 0.4);
 
@@ -72,7 +72,9 @@
     font-family: var(--font-body);
   }
 
-  h1, h2, h3 {
+  h1,
+  h2,
+  h3 {
     font-family: var(--font-display);
   }
 }
@@ -149,18 +151,24 @@
 }
 
 @keyframes float {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translateY(0px);
   }
+
   50% {
     transform: translateY(-20px);
   }
 }
 
 @keyframes pulse-slow {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 1;
   }
+
   50% {
     opacity: 0.6;
   }
@@ -171,6 +179,7 @@
     opacity: 0;
     transform: translateY(30px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -181,6 +190,7 @@
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }

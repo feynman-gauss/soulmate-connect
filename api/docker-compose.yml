@@ -1,0 +1,63 @@
+version: '3.8'
+
+services:
+  # MongoDB (Commented out as we are using Atlas)
+  # mongodb:
+  #   image: mongo:7.0
+  #   container_name: soulmate_mongodb
+  #   restart: always
+  #   ports:
+  #     - "27017:27017"
+  #   environment:
+  #     MONGO_INITDB_ROOT_USERNAME: admin
+  #     MONGO_INITDB_ROOT_PASSWORD: admin123
+  #     MONGO_INITDB_DATABASE: soulmate_connect
+  #   volumes:
+  #     - mongodb_data:/data/db
+  #   networks:
+  #     - soulmate_network
+
+  # FastAPI Backend
+  backend:
+    build: .
+    container_name: soulmate_backend
+    restart: always
+    ports:
+      - "8000:8000"
+    environment:
+      - MONGODB_URL=mongodb+srv://test:li8y5AC07hp496Dy@soulmate.hvef7sa.mongodb.net/
+      - CORS_ORIGINS=http://localhost:5173,http://localhost:3000,http://localhost:8080
+      - DEBUG=True
+    volumes:
+      - ./app:/app/app
+      - ./uploads:/app/uploads
+    # depends_on:
+    #   - mongodb
+    networks:
+      - soulmate_network
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+  # MongoDB Express (Commented out or update to Atlas if needed)
+  # mongo-express:
+  #   image: mongo-express:latest
+  #   container_name: soulmate_mongo_express
+  #   restart: always
+  #   ports:
+  #     - "8081:8081"
+  #   environment:
+  #     ME_CONFIG_MONGODB_ADMINUSERNAME: admin
+  #     ME_CONFIG_MONGODB_ADMINPASSWORD: admin123
+  #     ME_CONFIG_MONGODB_URL: mongodb+srv://test:li8y5AC07hp496Dy@soulmate.hvef7sa.mongodb.net/
+  #     ME_CONFIG_BASICAUTH_USERNAME: admin
+  #     ME_CONFIG_BASICAUTH_PASSWORD: password123
+  #   depends_on:
+  #     - mongodb
+  #   networks:
+  #     - soulmate_network
+
+volumes:
+  mongodb_data:
+
+
+networks:
+  soulmate_network:
+    driver: bridge
