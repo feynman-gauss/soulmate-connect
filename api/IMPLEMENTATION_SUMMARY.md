@@ -1,8 +1,8 @@
-# 🎉 Soulmate Connect Backend - Implementation Summary
+# 🎉 Soulmate Connect API - Implementation Summary
 
 ## ✅ What Has Been Created
 
-A **complete, production-ready FastAPI backend** for the Soulmate Connect matrimonial application with the following features:
+A **complete, production-ready FastAPI API** for the Soulmate Connect matrimonial application with the following features:
 
 ### 📦 Core Components
 
@@ -139,7 +139,7 @@ A **complete, production-ready FastAPI backend** for the Soulmate Connect matrim
 ### 📁 Project Structure
 
 ```
-backend/
+api/
 ├── app/
 │   ├── api/v1/
 │   │   ├── auth.py           ✅ Authentication endpoints
