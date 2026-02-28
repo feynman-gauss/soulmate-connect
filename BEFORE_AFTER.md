@@ -192,14 +192,14 @@ Testing imports...
 
 | File | Change | Type |
 |------|--------|------|
-| `backend/app/__init__.py` | Added exports | Fix |
-| `backend/app/api/v1/__init__.py` | Added exports | Fix |
-| `backend/app/utils/__init__.py` | Added exports | Fix |
-| `backend/app/schemas/__init__.py` | Added exports | Fix |
-| `backend/app/websockets/__init__.py` | Added exports | Fix |
-| `backend/app/websockets/chat.py` | Removed Depends parameter | Fix |
-| `backend/requirements.txt` | Updated Pillow, added PyJWT & cryptography | Fix |
-| `backend/test_startup.py` | Created startup test | Helper |
+| `api/app/__init__.py` | Added exports | Fix |
+| `api/app/api/v1/__init__.py` | Added exports | Fix |
+| `api/app/utils/__init__.py` | Added exports | Fix |
+| `api/app/schemas/__init__.py` | Added exports | Fix |
+| `api/app/websockets/__init__.py` | Added exports | Fix |
+| `api/app/websockets/chat.py` | Removed Depends parameter | Fix |
+| `api/requirements.txt` | Updated Pillow, added PyJWT & cryptography | Fix |
+| `api/test_startup.py` | Created startup test | Helper |
 | `SETUP_GUIDE.md` | Created setup documentation | Documentation |
 | `start.bat` | Created startup script | Helper |
 

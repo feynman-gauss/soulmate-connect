@@ -18,9 +18,9 @@ services:
   #     - soulmate_network
 
   # FastAPI Backend
-  backend:
+  api:
     build: .
-    container_name: soulmate_backend
+    container_name: soulmate_api
     restart: always
     ports:
       - "8000:8000"

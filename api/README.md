@@ -1,4 +1,4 @@
-# Soulmate Connect - Backend API
+# Soulmate Connect - API
 
 A modern, scalable backend API for the Soulmate Connect matrimonial platform built with FastAPI and MongoDB.
 
@@ -120,7 +120,7 @@ MAX_UPLOAD_SIZE=5242880  # 5MB
 ## 📁 Project Structure
 
 ```
-backend/
+api/
 ├── app/
 │   ├── api/v1/          # API endpoints
 │   │   ├── auth.py      # Authentication

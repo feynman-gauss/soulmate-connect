@@ -14,7 +14,7 @@ services:
     volumes:
       - ./nginx/nginx.local.conf:/etc/nginx/nginx.conf:ro
     depends_on:
-      - backend
+      - api
       - frontend
     networks:
       - soulmate_network
@@ -36,11 +36,11 @@ services:
   #     - soulmate_network
 
   # FastAPI Backend
-  backend:
+  api:
     build:
-      context: ./backend
+      context: ./api
       dockerfile: Dockerfile
-    container_name: soulmate_backend
+    container_name: soulmate_api
     restart: always
     environment:
       - MONGODB_URL=mongodb+srv://test:li8y5AC07hp496Dy@soulmate.hvef7sa.mongodb.net/
@@ -48,8 +48,8 @@ services:
       - ENVIRONMENT=development
       - CORS_ORIGINS=http://localhost,http://localhost:80
     volumes:
-      - ./backend/uploads:/app/uploads
-      - ./backend/logs:/app/logs
+      - ./api/uploads:/app/uploads
+      - ./api/logs:/app/logs
     # depends_on:
     #   - mongodb
     networks:

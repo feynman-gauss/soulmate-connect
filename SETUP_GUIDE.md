@@ -11,18 +11,18 @@ Imports like `from app.websockets.chat import websocket_endpoint` were failing b
 ### Resolutions
 
 #### 1. Fixed WebSocket Function Signature
-**File**: `backend/app/websockets/chat.py`
+**File**: `api/app/websockets/chat.py`
 - **Before**: `websocket_endpoint(websocket, token, db=Depends(get_database))`
 - **After**: `websocket_endpoint(websocket, token)`
 - **Reason**: FastAPI Depends() can only be used in route handlers, not when calling functions directly. Token validation doesn't require database access.
 
 #### 2. Added Module Exports to __init__.py Files
 **Files Modified**:
-- `backend/app/__init__.py` - Exports config, database functions
-- `backend/app/api/v1/__init__.py` - Exports all router modules
-- `backend/app/utils/__init__.py` - Exports security functions
-- `backend/app/schemas/__init__.py` - Exports all Pydantic schemas
-- `backend/app/websockets/__init__.py` - Exports manager and websocket_endpoint
+- `api/app/__init__.py` - Exports config, database functions
+- `api/app/api/v1/__init__.py` - Exports all router modules
+- `api/app/utils/__init__.py` - Exports security functions
+- `api/app/schemas/__init__.py` - Exports all Pydantic schemas
+- `api/app/websockets/__init__.py` - Exports manager and websocket_endpoint
 
 #### 3. Updated requirements.txt
 Added missing dependencies:
@@ -136,7 +136,7 @@ from app.websockets import manager, websocket_endpoint
 
 ## File Structure
 ```
-backend/
+api/
 ├── app/
 │   ├── __init__.py (exports core modules)
 │   ├── config.py

@@ -17,7 +17,7 @@ if not exist "frontend" (
     exit /b 1
 )
 
-echo Starting Backend (FastAPI on port 8000)...
+echo Starting API (FastAPI on port 8000)...
 echo.
 start cmd /k "cd api && python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
 

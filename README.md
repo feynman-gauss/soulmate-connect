@@ -8,9 +8,9 @@
 3. **[start.bat](start.bat)** - One-click startup script for Windows
 
 ### 📋 Integration Docs
-4. **[INTEGRATION.md](INTEGRATION.md)** - Frontend-Backend integration details
-5. **[IMPLEMENTATION_SUMMARY.md](backend/IMPLEMENTATION_SUMMARY.md)** - Backend implementation
-6. **[API_REFERENCE.md](backend/API_REFERENCE.md)** - Complete API endpoint reference
+4. **[INTEGRATION.md](INTEGRATION.md)** - Frontend-API integration details
+5. **[IMPLEMENTATION_SUMMARY.md](api/IMPLEMENTATION_SUMMARY.md)** - API implementation
+6. **[API_REFERENCE.md](api/API_REFERENCE.md)** - Complete API endpoint reference
 
 ### 💼 Investment Docs (IPO Memos)
 7. **[IPO_Investment_Memo.md](ipo-memo/IPO_Investment_Memo.md)** - JP Morgan style investment memo
@@ -62,7 +62,7 @@ soulmate-connect/
 │   ├── INTEGRATION.md              ← API integration
 │   └── start.bat                   ← Launch script
 │
-├── backend/                         (FastAPI application)
+├── api/                             (FastAPI application)
 │   ├── app/
 │   │   ├── __init__.py             ✅ Fixed - exports added
 │   │   ├── main.py                 ✅ Fixed - WebSocket wired
@@ -258,7 +258,7 @@ python test_startup.py
 1. **Start the application**: `start.bat`
 2. **Test authentication**: Register → Login
 3. **Test features**: Discover → Matches → Chat
-4. **Monitor logs**: Check both backend/frontend terminals
+4. **Monitor logs**: Check both api/frontend terminals
 5. **Deploy to production**: Follow SETUP_GUIDE.md deployment section
 
 ---
