@@ -28,7 +28,6 @@ export function BottomNav() {
       <div className="flex items-center justify-around py-2 px-4 max-w-lg mx-auto">
         {navItems.map((item) => {
           const isActive = location.pathname === item.path;
-          const showBadge = item.path === '/matches' && unreadCount > 0;
           return (
             <Link
               key={item.path}
@@ -48,11 +47,6 @@ export function BottomNav() {
                   "w-5 h-5 transition-all",
                   isActive && "scale-110"
                 )} />
-                {showBadge && (
-                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-primary rounded-full text-[9px] flex items-center justify-center text-white font-bold animate-pulse-slow">
-                    {unreadCount > 9 ? '9+' : unreadCount}
-                  </span>
-                )}
               </div>
               <span className="text-xs font-medium">{item.label}</span>
             </Link>

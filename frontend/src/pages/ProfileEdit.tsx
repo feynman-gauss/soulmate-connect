@@ -384,6 +384,37 @@ export default function ProfileEdit() {
                         </div>
                     </div>
                 </div>
+
+                {/* Interests */}
+                <div className="glass-card rounded-2xl p-4">
+                    <h3 className="font-semibold mb-2">Interests</h3>
+                    <p className="text-xs text-muted-foreground mb-4">Select your interests to help find better matches</p>
+                    <div className="flex flex-wrap gap-2">
+                        {['Reading', 'Cooking', 'Travel', 'Music', 'Fitness', 'Yoga', 'Photography', 'Dancing', 'Movies', 'Cricket', 'Art', 'Spirituality', 'Gaming', 'Gardening', 'Hiking', 'Swimming', 'Writing', 'Fashion', 'Technology', 'Social Work'].map((interest) => {
+                            const isSelected = formData.interests.includes(interest);
+                            return (
+                                <button
+                                    key={interest}
+                                    type="button"
+                                    onClick={() => {
+                                        setFormData(prev => ({
+                                            ...prev,
+                                            interests: isSelected
+                                                ? prev.interests.filter(i => i !== interest)
+                                                : [...prev.interests, interest]
+                                        }));
+                                    }}
+                                    className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${isSelected
+                                            ? 'bg-primary text-white shadow-md'
+                                            : 'glass-card border border-white/10 text-muted-foreground hover:border-primary/50 hover:text-foreground'
+                                        }`}
+                                >
+                                    {interest}
+                                </button>
+                            );
+                        })}
+                    </div>
+                </div>
             </main>
         </div>
     );

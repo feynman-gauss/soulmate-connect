@@ -71,6 +71,10 @@ export function NotificationDropdown() {
         setIsOpen(open);
         if (open) {
             fetchNotifications();
+            // Auto mark all as read when panel opens
+            if (unreadCount > 0) {
+                markAllAsRead();
+            }
         }
     };
 
@@ -94,14 +98,8 @@ export function NotificationDropdown() {
                 </Button>
             </SheetTrigger>
             <SheetContent className="w-full sm:max-w-md overflow-y-auto">
-                <SheetHeader className="flex flex-row items-center justify-between">
+                <SheetHeader>
                     <SheetTitle>Notifications</SheetTitle>
-                    {unreadCount > 0 && (
-                        <Button variant="ghost" size="sm" onClick={markAllAsRead}>
-                            <Check className="w-4 h-4 mr-1" />
-                            Mark all read
-                        </Button>
-                    )}
                 </SheetHeader>
 
                 <div className="mt-6 space-y-2">
