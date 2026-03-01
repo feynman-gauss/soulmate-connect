@@ -507,54 +507,6 @@ export default function ChatConversation() {
         ))}
       </div>
 
-      {/* Upload Preview */}
-      {uploadPreview && (
-        <div className="glass-card border-t border-white/10 px-4 pt-3 relative z-10">
-          <div className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/10">
-            {uploadPreview.previewUrl ? (
-              <img
-                src={uploadPreview.previewUrl}
-                alt="Preview"
-                className="w-16 h-16 rounded-lg object-cover"
-              />
-            ) : (
-              <div className="w-16 h-16 rounded-lg bg-primary/20 flex items-center justify-center">
-                <FileText className="w-8 h-8 text-primary" />
-              </div>
-            )}
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate">{uploadPreview.file.name}</p>
-              <p className="text-xs text-muted-foreground">
-                {(uploadPreview.file.size / 1024).toFixed(1)} KB
-              </p>
-            </div>
-            <div className="flex gap-2">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="rounded-full hover:bg-destructive/20"
-                onClick={cancelUpload}
-              >
-                <X className="w-4 h-4" />
-              </Button>
-              <Button
-                variant="gradient"
-                size="icon"
-                className="rounded-full"
-                onClick={handleUploadFile}
-                disabled={isUploading}
-              >
-                {isUploading ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Send className="w-4 h-4" />
-                )}
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Hidden file input */}
       <input
         ref={fileInputRef}
@@ -566,60 +518,104 @@ export default function ChatConversation() {
 
       {/* Input */}
       <div className="glass-card border-t border-white/10 p-4 relative z-10">
-        <div className="flex items-center gap-3">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="rounded-full flex-shrink-0"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={isUploading}
-            title="Attach file (Image, PDF, DOC)"
-          >
-            <Paperclip className="w-5 h-5" />
-          </Button>
-          <div className="flex-1 relative">
-            <Input
-              value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
-              placeholder="Type a message..."
-              className="pr-12 glass-card border-white/10 rounded-full h-12 text-sm sm:text-base"
-              onKeyPress={(e) => e.key === 'Enter' && handleSend()}
-            />
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="absolute right-1 top-1/2 -translate-y-1/2 rounded-full"
-                >
-                  <Smile className="w-5 h-5" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent side="top" align="end" className="w-64 p-2 glass-card border-white/10">
-                <div className="grid grid-cols-5 gap-1">
-                  {COMMON_EMOJIS.map(emoji => (
-                    <button
-                      key={emoji}
-                      onClick={() => addEmoji(emoji)}
-                      className="text-2xl p-2 hover:bg-white/10 rounded-lg transition-colors"
-                    >
-                      {emoji}
-                    </button>
-                  ))}
+        {/* Inline upload preview */}
+        {uploadPreview ? (
+          <div className="flex items-center gap-3">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="rounded-full flex-shrink-0 hover:bg-destructive/20"
+              onClick={cancelUpload}
+            >
+              <X className="w-5 h-5" />
+            </Button>
+            <div className="flex-1 flex items-center gap-3 glass-card border border-white/10 rounded-full h-12 px-3 overflow-hidden">
+              {uploadPreview.previewUrl ? (
+                <img
+                  src={uploadPreview.previewUrl}
+                  alt="Preview"
+                  className="w-8 h-8 rounded-lg object-cover flex-shrink-0"
+                />
+              ) : (
+                <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center flex-shrink-0">
+                  <FileText className="w-4 h-4 text-primary" />
                 </div>
-              </PopoverContent>
-            </Popover>
+              )}
+              <span className="text-sm truncate flex-1">{uploadPreview.file.name}</span>
+              <span className="text-xs text-muted-foreground flex-shrink-0">
+                {(uploadPreview.file.size / 1024).toFixed(0)} KB
+              </span>
+            </div>
+            <Button
+              variant="gradient"
+              size="icon"
+              className="rounded-full flex-shrink-0"
+              onClick={handleUploadFile}
+              disabled={isUploading}
+            >
+              {isUploading ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : (
+                <Send className="w-5 h-5" />
+              )}
+            </Button>
           </div>
-          <Button
-            variant="gradient"
-            size="icon"
-            className="rounded-full flex-shrink-0"
-            onClick={handleSend}
-            disabled={!newMessage.trim()}
-          >
-            <Send className="w-5 h-5" />
-          </Button>
-        </div>
+        ) : (
+          <div className="flex items-center gap-3">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="rounded-full flex-shrink-0"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isUploading}
+              title="Attach file (Image, PDF, DOC)"
+            >
+              <Paperclip className="w-5 h-5" />
+            </Button>
+            <div className="flex-1 relative">
+              <Input
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                placeholder="Type a message..."
+                className="pr-12 glass-card border-white/10 rounded-full h-12 text-sm sm:text-base"
+                onKeyPress={(e) => e.key === 'Enter' && handleSend()}
+              />
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-1 top-1/2 -translate-y-1/2 rounded-full"
+                  >
+                    <Smile className="w-5 h-5" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent side="top" align="end" className="w-64 p-2 glass-card border-white/10">
+                  <div className="grid grid-cols-5 gap-1">
+                    {COMMON_EMOJIS.map(emoji => (
+                      <button
+                        key={emoji}
+                        onClick={() => addEmoji(emoji)}
+                        className="text-2xl p-2 hover:bg-white/10 rounded-lg transition-colors"
+                      >
+                        {emoji}
+                      </button>
+                    ))}
+                  </div>
+                </PopoverContent>
+              </Popover>
+            </div>
+            <Button
+              variant="gradient"
+              size="icon"
+              className="rounded-full flex-shrink-0"
+              onClick={handleSend}
+              disabled={!newMessage.trim()}
+            >
+              <Send className="w-5 h-5" />
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );

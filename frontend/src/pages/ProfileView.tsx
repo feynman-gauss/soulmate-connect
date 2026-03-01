@@ -204,11 +204,7 @@ export default function ProfileView() {
               Manglik: {profile.manglik_status === 'dont_know' ? "Don't Know" : profile.manglik_status}
             </Badge>
           )}
-          {profile.sub_caste && (
-            <Badge variant="secondary" className="glass-card border-white/10">
-              {profile.sub_caste}
-            </Badge>
-          )}
+
         </div>
 
         {/* About */}
