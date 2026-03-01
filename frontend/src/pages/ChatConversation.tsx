@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Phone, Video, MoreVertical, Send, Image, Smile, Loader2 } from 'lucide-react';
+import { ArrowLeft, Phone, Video, MoreVertical, Send, Image, Smile, Loader2, Paperclip, FileText, Download, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
@@ -27,8 +27,11 @@ const COMMON_EMOJIS = ['😂', '❤️', '😍', '🤔', '🔥', '👍', '🙌',
 interface Message {
   id: string;
   content: string;
-  senderId: string;
-  timestamp: string;
+  sender_id: string;
+  created_at: string;
+  message_type?: string;
+  file_url?: string;
+  file_name?: string;
 }
 
 export default function ChatConversation() {
@@ -38,9 +41,12 @@ export default function ChatConversation() {
   const [isLoading, setIsLoading] = useState(true);
   const [matchProfile, setMatchProfile] = useState<any>(null);
   const [currentUserId, setCurrentUserId] = useState<string>('');
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadPreview, setUploadPreview] = useState<{ file: File; previewUrl: string | null } | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
+
 
   useEffect(() => {
     // Get current user ID from local storage
@@ -122,7 +128,10 @@ export default function ChatConversation() {
               id: Date.now().toString(), // or data.message.id if available
               content: data.message,
               sender_id: data.sender_id,
-              created_at: new Date().toISOString()
+              created_at: new Date().toISOString(),
+              message_type: data.message_type || 'text',
+              file_url: data.file_url || null,
+              file_name: data.file_name || null,
             };
             setMessages(prev => [...prev, incomingMsg]);
           }
@@ -170,6 +179,7 @@ export default function ChatConversation() {
       content,
       sender_id: currentUserId, // Use actual current user ID
       created_at: new Date().toISOString(),
+      message_type: 'text',
       isOptimistic: true
     };
 
@@ -223,6 +233,171 @@ export default function ChatConversation() {
 
   const addEmoji = (emoji: string) => {
     setNewMessage(prev => prev + emoji);
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp',
+      'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+
+    if (!allowedTypes.includes(file.type)) {
+      alert('File type not supported. Allowed: Images (JPG, PNG, GIF, WebP), PDF, DOC, DOCX');
+      return;
+    }
+
+    // Validate file size (10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      alert('File too large. Maximum size is 10MB.');
+      return;
+    }
+
+    // Create preview for images
+    let previewUrl: string | null = null;
+    if (file.type.startsWith('image/')) {
+      previewUrl = URL.createObjectURL(file);
+    }
+
+    setUploadPreview({ file, previewUrl });
+
+    // Reset input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const cancelUpload = () => {
+    if (uploadPreview?.previewUrl) {
+      URL.revokeObjectURL(uploadPreview.previewUrl);
+    }
+    setUploadPreview(null);
+  };
+
+  const handleUploadFile = async () => {
+    if (!uploadPreview) return;
+
+    const file = uploadPreview.file;
+    const isImage = file.type.startsWith('image/');
+
+    setIsUploading(true);
+
+    // Optimistic update
+    const tempMsg: any = {
+      id: 'uploading-' + Date.now().toString(),
+      content: isImage ? '📷 Image' : `📎 ${file.name}`,
+      sender_id: currentUserId,
+      created_at: new Date().toISOString(),
+      message_type: isImage ? 'image' : 'document',
+      file_name: file.name,
+      file_url: uploadPreview.previewUrl || undefined,
+      isOptimistic: true,
+      isUploading: true,
+    };
+
+    setMessages(prev => [...prev, tempMsg]);
+    cancelUpload();
+
+    try {
+      const result = await api.chat.uploadFile(id!, file);
+      // Replace optimistic message with real one
+      setMessages(prev => prev.map(m =>
+        m.id === tempMsg.id ? { ...result, isOptimistic: false, isUploading: false } : m
+      ));
+    } catch (error) {
+      console.error('Failed to upload file:', error);
+      // Remove optimistic message on failure
+      setMessages(prev => prev.filter(m => m.id !== tempMsg.id));
+      alert('Failed to upload file. Please try again.');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const getFileIcon = (fileName: string) => {
+    const ext = fileName?.split('.').pop()?.toLowerCase();
+    if (ext === 'pdf') return '📄';
+    if (ext === 'doc' || ext === 'docx') return '📝';
+    return '📎';
+  };
+
+  const handleDownloadFile = (fileUrl: string, fileName: string) => {
+    const link = document.createElement('a');
+    link.href = fileUrl;
+    link.download = fileName || 'download';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const renderMessageContent = (msg: any) => {
+    const isSender = msg.sender_id === currentUserId;
+
+    // Image message
+    if (msg.message_type === 'image' && msg.file_url) {
+      return (
+        <div className="space-y-1">
+          {msg.isUploading && (
+            <div className="flex items-center gap-2 mb-1">
+              <Loader2 className="w-3 h-3 animate-spin" />
+              <span className="text-xs opacity-70">Uploading...</span>
+            </div>
+          )}
+          <img
+            src={msg.file_url}
+            alt={msg.file_name || 'Image'}
+            className="rounded-lg max-w-[240px] max-h-[300px] object-cover cursor-pointer hover:opacity-90 transition-opacity"
+            onClick={() => window.open(msg.file_url, '_blank')}
+          />
+          {msg.file_name && (
+            <p className="text-[10px] opacity-60">{msg.file_name}</p>
+          )}
+        </div>
+      );
+    }
+
+    // Document message (PDF, DOC, DOCX)
+    if (msg.message_type === 'document' && msg.file_url) {
+      return (
+        <div className="space-y-2">
+          {msg.isUploading && (
+            <div className="flex items-center gap-2 mb-1">
+              <Loader2 className="w-3 h-3 animate-spin" />
+              <span className="text-xs opacity-70">Uploading...</span>
+            </div>
+          )}
+          <div
+            className={cn(
+              "flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all hover:scale-[1.02]",
+              isSender
+                ? "bg-white/15 hover:bg-white/20"
+                : "bg-white/5 hover:bg-white/10 border border-white/10"
+            )}
+            onClick={() => handleDownloadFile(msg.file_url, msg.file_name)}
+          >
+            <div className={cn(
+              "w-10 h-10 rounded-lg flex items-center justify-center text-lg flex-shrink-0",
+              isSender ? "bg-white/20" : "bg-primary/20"
+            )}>
+              {getFileIcon(msg.file_name)}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium truncate">{msg.file_name || 'Document'}</p>
+              <p className="text-[10px] opacity-60">
+                {msg.file_name?.split('.').pop()?.toUpperCase()} Document
+              </p>
+            </div>
+            <Download className={cn("w-4 h-4 flex-shrink-0", isSender ? "text-white/70" : "text-primary/70")} />
+          </div>
+        </div>
+      );
+    }
+
+    // Default text message
+    return <p className="text-sm">{msg.content}</p>;
   };
 
   if (!matchProfile && isLoading) {
@@ -301,7 +476,7 @@ export default function ChatConversation() {
                   : "glass-card rounded-bl-sm"
               )}
             >
-              <p className="text-sm">{msg.content}</p>
+              {renderMessageContent(msg)}
               <p className={cn(
                 "text-[10px] mt-1",
                 msg.sender_id === currentUserId ? "text-white/70" : "text-muted-foreground"
@@ -312,6 +487,63 @@ export default function ChatConversation() {
           </div>
         ))}
       </div>
+
+      {/* Upload Preview */}
+      {uploadPreview && (
+        <div className="glass-card border-t border-white/10 px-4 pt-3 relative z-10">
+          <div className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/10">
+            {uploadPreview.previewUrl ? (
+              <img
+                src={uploadPreview.previewUrl}
+                alt="Preview"
+                className="w-16 h-16 rounded-lg object-cover"
+              />
+            ) : (
+              <div className="w-16 h-16 rounded-lg bg-primary/20 flex items-center justify-center">
+                <FileText className="w-8 h-8 text-primary" />
+              </div>
+            )}
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium truncate">{uploadPreview.file.name}</p>
+              <p className="text-xs text-muted-foreground">
+                {(uploadPreview.file.size / 1024).toFixed(1)} KB
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="rounded-full hover:bg-destructive/20"
+                onClick={cancelUpload}
+              >
+                <X className="w-4 h-4" />
+              </Button>
+              <Button
+                variant="gradient"
+                size="icon"
+                className="rounded-full"
+                onClick={handleUploadFile}
+                disabled={isUploading}
+              >
+                {isUploading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Send className="w-4 h-4" />
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/gif,image/webp,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        className="hidden"
+        onChange={handleFileSelect}
+      />
 
       {/* Input */}
       <div className="glass-card border-t border-white/10 p-4 relative z-10">
@@ -324,12 +556,19 @@ export default function ChatConversation() {
         />
         <div className="flex items-center gap-3">
           <Button
+
             variant="ghost"
+
             size="icon"
+
             className="rounded-full flex-shrink-0"
             onClick={() => fileInputRef.current?.click()}
+
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isUploading}
+            title="Attach file (Image, PDF, DOC)"
           >
-            <Image className="w-5 h-5" />
+            <Paperclip className="w-5 h-5" />
           </Button>
           <div className="flex-1 relative">
             <Input

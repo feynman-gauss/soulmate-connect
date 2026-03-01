@@ -278,6 +278,19 @@ export const api = {
             });
             return handleResponse(response);
         },
+
+        uploadFile: async (matchId: string, file: File) => {
+            const token = getAuthToken();
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const response = await fetch(`${API_BASE_URL}/chat/${matchId}/upload`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` },
+                body: formData,
+            });
+            return handleResponse(response);
+        },
     },
 
     // Search
