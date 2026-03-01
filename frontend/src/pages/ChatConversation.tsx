@@ -46,12 +46,14 @@ export default function ChatConversation() {
 
         // 2. Fetch initial messages
         const msgs = await api.chat.getMessages(id!);
-        // Backend returns [Newest, ..., Oldest] if we don't reverse in backend.
-        // Wait, backend api code says: .sort("created_at", -1) -> Newest first.
-        // THEN messages.reverse() -> Oldest first.
-        // So the API returns [Oldest, ..., Newest].
-        // So we SHOULD NOT reverse it here if we want [Oldest, ..., Newest]
         setMessages(msgs);
+
+        // 3. Mark all messages in this conversation as read
+        try {
+          await api.chat.markAsRead(id!);
+        } catch (e) {
+          console.warn('Could not mark messages as read:', e);
+        }
 
         // Correct order: Backend returns [Newest, ..., Oldest]
         // We want to display [Oldest, ..., Newest] at the bottom

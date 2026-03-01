@@ -1,6 +1,5 @@
-import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Bell, Heart, MessageCircle, Star, User, Check, Loader2 } from 'lucide-react';
+import { Bell, Heart, MessageCircle, Star, User, Check, Loader2, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
     Sheet,
@@ -9,8 +8,10 @@ import {
     SheetTitle,
     SheetTrigger,
 } from '@/components/ui/sheet';
-import { api } from '@/services/api';
 import { cn } from '@/lib/utils';
+import { useState } from 'react';
+import { useNotifications } from '@/hooks/useNotifications';
+import { formatTimeAgo } from '@/utils/timeUtils';
 
 interface Notification {
     id: string;
@@ -34,7 +35,7 @@ const getNotificationIcon = (type: string) => {
         case 'match_request':
             return <Heart className="w-5 h-5 text-primary" />;
         case 'request_sent':
-            return <Heart className="w-5 h-5 text-green-500" />;
+            return <Users className="w-5 h-5 text-green-500" />;
         case 'new_message':
             return <MessageCircle className="w-5 h-5 text-blue-500" />;
         default:
@@ -46,12 +47,12 @@ const getNotificationLink = (notification: Notification): string => {
     switch (notification.type) {
         case 'new_match':
         case 'request_accepted':
-            return '/matches'; // Go to matches page to see the new match
+            return '/matches';
         case 'match_request':
         case 'super_interest':
-            return '/matches'; // Go to matches page to accept/reject
+            return '/matches';
         case 'request_sent':
-            return '/matches'; // Go to matches page to see sent requests
+            return '/matches';
         case 'super_like':
         case 'new_like':
             return notification.data?.user_id ? `/profile/${notification.data.user_id}` : '/matches';
@@ -62,83 +63,31 @@ const getNotificationLink = (notification: Notification): string => {
     }
 };
 
-// Import formatTimeAgo from the utility file
-import { formatTimeAgo } from '@/utils/timeUtils';
-
 export function NotificationDropdown() {
-    const [notifications, setNotifications] = useState<Notification[]>([]);
-    const [unreadCount, setUnreadCount] = useState(0);
-    const [isLoading, setIsLoading] = useState(false);
+    const { notifications, unreadCount, isLoading, markAsRead, markAllAsRead, fetchNotifications } = useNotifications();
     const [isOpen, setIsOpen] = useState(false);
 
-    const fetchNotifications = async () => {
-        try {
-            setIsLoading(true);
-            const data = await api.notifications.getAll();
-            setNotifications(data || []);
-            setUnreadCount(data?.filter((n: Notification) => !n.read).length || 0);
-        } catch (error) {
-            console.error('Failed to fetch notifications:', error);
-            setNotifications([]);
-            setUnreadCount(0);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const fetchUnreadCount = async () => {
-        try {
-            const data = await api.notifications.getUnreadCount();
-            setUnreadCount(data?.count || 0);
-        } catch (error) {
-            // Silently fail for count fetch
-        }
-    };
-
-    useEffect(() => {
-        // Fetch unread count on mount
-        fetchUnreadCount();
-    }, []);
-
-    useEffect(() => {
-        // Fetch full notifications when sheet opens
-        if (isOpen) {
+    const handleOpen = (open: boolean) => {
+        setIsOpen(open);
+        if (open) {
             fetchNotifications();
         }
-    }, [isOpen]);
+    };
 
     const handleNotificationClick = async (notification: Notification) => {
         if (!notification.read) {
-            try {
-                await api.notifications.markAsRead(notification.id);
-                setNotifications(prev =>
-                    prev.map(n => n.id === notification.id ? { ...n, read: true } : n)
-                );
-                setUnreadCount(prev => Math.max(0, prev - 1));
-            } catch (error) {
-                console.error('Failed to mark notification as read:', error);
-            }
+            await markAsRead(notification.id);
         }
         setIsOpen(false);
     };
 
-    const handleMarkAllRead = async () => {
-        try {
-            await api.notifications.markAllAsRead();
-            setNotifications(prev => prev.map(n => ({ ...n, read: true })));
-            setUnreadCount(0);
-        } catch (error) {
-            console.error('Failed to mark all as read:', error);
-        }
-    };
-
     return (
-        <Sheet open={isOpen} onOpenChange={setIsOpen}>
+        <Sheet open={isOpen} onOpenChange={handleOpen}>
             <SheetTrigger asChild>
                 <Button variant="glass" size="icon" className="rounded-full relative">
                     <Bell className="w-5 h-5" />
                     {unreadCount > 0 && (
-                        <span className="absolute -top-1 -right-1 w-5 h-5 bg-primary rounded-full text-[10px] flex items-center justify-center text-white font-bold">
+                        <span className="absolute -top-1 -right-1 w-5 h-5 bg-primary rounded-full text-[10px] flex items-center justify-center text-white font-bold animate-pulse-slow">
                             {unreadCount > 9 ? '9+' : unreadCount}
                         </span>
                     )}
@@ -148,7 +97,7 @@ export function NotificationDropdown() {
                 <SheetHeader className="flex flex-row items-center justify-between">
                     <SheetTitle>Notifications</SheetTitle>
                     {unreadCount > 0 && (
-                        <Button variant="ghost" size="sm" onClick={handleMarkAllRead}>
+                        <Button variant="ghost" size="sm" onClick={markAllAsRead}>
                             <Check className="w-4 h-4 mr-1" />
                             Mark all read
                         </Button>
