@@ -291,6 +291,14 @@ export const api = {
             });
             return handleResponse(response);
         },
+
+        getUserStatus: async (userId: string) => {
+            const token = getAuthToken();
+            const response = await fetch(`${API_BASE_URL}/chat/user/${userId}/status`, {
+                headers: { 'Authorization': `Bearer ${token}` },
+            });
+            return handleResponse(response);
+        },
     },
 
     // Search

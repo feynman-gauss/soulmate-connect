@@ -2,6 +2,7 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import { MessageCircle, Search, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
+import { cn } from '@/lib/utils';
 import { api } from '@/services/api';
 import { useState, useEffect } from 'react';
 import { getProfilePhoto } from '@/utils/profileUtils';
@@ -94,7 +95,10 @@ export default function Chat() {
                       alt={match.profile?.name || 'User'}
                       className="w-14 h-14 rounded-full object-cover"
                     />
-                    <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 rounded-full ring-2 ring-background" />
+                    <div className={cn(
+                      "absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full ring-2 ring-background",
+                      match.is_online ? "bg-green-500" : "bg-gray-400"
+                    )} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between mb-1">

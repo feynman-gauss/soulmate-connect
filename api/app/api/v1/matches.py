@@ -225,6 +225,7 @@ async def get_matches(
     }).sort("matched_at", -1).to_list()
     
     # Get other user profiles
+    from app.websockets.chat import manager
     result = []
     for match in matches:
         # Determine which user is the "other" user
@@ -246,6 +247,7 @@ async def get_matches(
                 "last_message": match.get("last_message"),
                 "last_message_at": match.get("last_message_at"),
                 "unread_count": unread_count,
+                "is_online": manager.is_user_online(str(other_user_id)),
                 "profile": serialize_user(other_user)
             })
     
@@ -294,6 +296,7 @@ async def get_match(
     # Determine unread count for current user
     unread_count = match.get("unread_count_user1", 0) if match["user1_id"] == current_user["_id"] else match.get("unread_count_user2", 0)
     
+    from app.websockets.chat import manager
     return {
         "id": str(match["_id"]),
         "user1_id": str(match["user1_id"]),
@@ -303,6 +306,7 @@ async def get_match(
         "last_message": match.get("last_message"),
         "last_message_at": match.get("last_message_at"),
         "unread_count": unread_count,
+        "is_online": manager.is_user_online(str(other_user_id)),
         "profile": serialize_user(other_user)
     }
 

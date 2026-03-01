@@ -43,11 +43,27 @@ export default function ChatConversation() {
   const [currentUserId, setCurrentUserId] = useState<string>('');
   const [isUploading, setIsUploading] = useState(false);
   const [uploadPreview, setUploadPreview] = useState<{ file: File; previewUrl: string | null } | null>(null);
+  const [isOnline, setIsOnline] = useState(false);
+  const [lastSeen, setLastSeen] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
 
+  const formatLastSeen = (dateStr: string | null) => {
+    if (!dateStr) return null;
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMin = Math.floor(diffMs / 60000);
+    const diffHr = Math.floor(diffMin / 60);
+    const diffDay = Math.floor(diffHr / 24);
 
+    if (diffMin < 1) return 'Last seen just now';
+    if (diffMin < 60) return `Last seen ${diffMin}m ago`;
+    if (diffHr < 24) return `Last seen ${diffHr}h ago`;
+    if (diffDay < 7) return `Last seen ${diffDay}d ago`;
+    return `Last seen ${date.toLocaleDateString()}`;
+  };
   useEffect(() => {
     // Get current user ID from local storage
     const userStr = localStorage.getItem('user');
@@ -67,6 +83,19 @@ export default function ChatConversation() {
         const matchData = await api.matches.getMatch(id!);
         setMatchProfile(matchData.profile);
 
+        // Set initial online status from match data
+        setIsOnline(matchData.is_online || false);
+
+        // Also fetch detailed status (includes last_seen)
+        if (matchData.profile?.id) {
+          try {
+            const statusData = await api.chat.getUserStatus(matchData.profile.id);
+            setIsOnline(statusData.is_online);
+            setLastSeen(statusData.last_seen);
+          } catch (e) {
+            console.warn('Could not fetch user status:', e);
+          }
+        }
         // 2. Fetch initial messages
         const msgs = await api.chat.getMessages(id!);
         setMessages(msgs);
@@ -135,6 +164,14 @@ export default function ChatConversation() {
             };
             setMessages(prev => [...prev, incomingMsg]);
           }
+
+          // Handle real-time online/offline status updates
+          if (data.type === 'user.status' && matchProfile?.id && data.user_id === String(matchProfile.id)) {
+            setIsOnline(data.is_online);
+            if (!data.is_online && data.last_seen) {
+              setLastSeen(data.last_seen);
+            }
+          }
         });
 
         // If WS closes cleanly or fails, fallback to polling
@@ -192,30 +229,6 @@ export default function ChatConversation() {
       console.error('Failed to send message:', error);
       // Remove optimistic message on failure
       setMessages(prev => prev.filter(m => m.id !== tempMsg.id));
-    }
-  };
-
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    try {
-      setIsLoading(true);
-      // In a real app, we'd upload the file and get a URL
-      // For now, we'll simulate it using the profile photo upload service if it returns a URL
-      // Or just toast for now if chat specifically needs a different endpoint
-      const result = await api.profiles.uploadPhoto(file);
-      if (result.photo_url) {
-        await api.chat.sendMessage(id!, result.photo_url, 'image');
-        toast.success('Image sent!');
-      } else {
-        toast.error('Failed to upload image');
-      }
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to upload image');
-    } finally {
-      setIsLoading(false);
-      if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
 
@@ -430,7 +443,13 @@ export default function ChatConversation() {
         />
         <div className="flex-1">
           <h2 className="font-semibold text-foreground">{matchProfile?.name || 'Loading...'}</h2>
-          <p className="text-xs text-green-500">Online</p>
+          {isOnline ? (
+            <p className="text-xs text-green-500">Online</p>
+          ) : lastSeen ? (
+            <p className="text-xs text-muted-foreground">{formatLastSeen(lastSeen)}</p>
+          ) : (
+            <p className="text-xs text-muted-foreground">Offline</p>
+          )}
         </div>
         <div className="flex gap-2">
           <DropdownMenu>
@@ -547,23 +566,11 @@ export default function ChatConversation() {
 
       {/* Input */}
       <div className="glass-card border-t border-white/10 p-4 relative z-10">
-        <input
-          type="file"
-          ref={fileInputRef}
-          className="hidden"
-          accept="image/*"
-          onChange={handleImageUpload}
-        />
         <div className="flex items-center gap-3">
           <Button
-
             variant="ghost"
-
             size="icon"
-
             className="rounded-full flex-shrink-0"
-            onClick={() => fileInputRef.current?.click()}
-
             onClick={() => fileInputRef.current?.click()}
             disabled={isUploading}
             title="Attach file (Image, PDF, DOC)"

@@ -58,6 +58,33 @@ async def get_conversations(
     return conversations
 
 
+@router.get("/user/{user_id}/status")
+async def get_user_status(
+    user_id: str,
+    current_user: dict = Depends(get_current_user),
+    db: AsyncDatabase = Depends(get_database)
+):
+    """Get a user's online status and last seen time"""
+    from app.websockets.chat import manager
+    
+    is_online = manager.is_user_online(user_id)
+    last_seen = None
+    
+    if not is_online:
+        try:
+            user = await db.users.find_one({"_id": ObjectId(user_id)})
+            if user:
+                last_seen = user.get("last_seen")
+        except Exception:
+            pass
+    
+    return {
+        "user_id": user_id,
+        "is_online": is_online,
+        "last_seen": last_seen.isoformat() if last_seen else None
+    }
+
+
 @router.get("/{match_id}/messages", response_model=List[MessageResponse])
 async def get_messages(
     match_id: str,

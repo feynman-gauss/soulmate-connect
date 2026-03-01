@@ -36,6 +36,7 @@ class MatchResponse(BaseModel):
     last_message: Optional[str] = None
     last_message_at: Optional[datetime] = None
     unread_count: int = 0
+    is_online: bool = False
     profile: Optional[dict] = None  # Will contain the other user's profile
     
     class Config:
