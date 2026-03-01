@@ -15,16 +15,20 @@ export default function Login() {
     password: '',
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setErrorMsg('');
     try {
       await api.auth.login(formData.email, formData.password);
       toast.success('Welcome back!');
       navigate('/discover');
     } catch (error: any) {
-      toast.error(error.message || 'Login failed');
+      const message = error.message || 'Login failed';
+      toast.error(message);
+      setErrorMsg(message);
     } finally {
       setIsLoading(false);
     }
@@ -113,6 +117,12 @@ export default function Login() {
             <Button type="submit" variant="gradient" className="w-full" size="lg" disabled={isLoading}>
               {isLoading ? 'Signing In...' : 'Sign In'}
             </Button>
+
+            {errorMsg && (
+              <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-500 text-sm text-center animate-in fade-in slide-in-from-bottom-2">
+                {errorMsg}
+              </div>
+            )}
           </form>
 
           {/* Divider */}
