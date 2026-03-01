@@ -20,12 +20,6 @@ const GOTRA_OPTIONS = [
   'Garg', 'Vatsa', 'Shandilya', 'Mudgal', 'Other'
 ];
 
-// Sub-caste options
-const SUB_CASTE_OPTIONS = [
-  'Barhsena Tyagi', 'Chaumukha Tyagi', 'Dauhar Tyagi',
-  'Baliyan Tyagi', 'Khaga Tyagi', 'Other'
-];
-
 // Manglik options
 const MANGLIK_OPTIONS = [
   { value: 'no', label: 'No' },
@@ -99,13 +93,11 @@ export default function Signup() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (step < 3) {
+    if (step < totalSteps) {
       setStep(step + 1);
       return;
     }
-    if (step >= 3) {
-      await handleRegister(false);
-    }
+    await handleRegister(false);
   };
 
   const handleSkipOptional = async () => {
@@ -344,20 +336,6 @@ export default function Signup() {
                     </SelectContent>
                   </Select>
                   <p className="text-xs text-muted-foreground">Important for matching - same gotra avoided</p>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="subCaste">Sub-caste</Label>
-                  <Select value={formData.subCaste} onValueChange={(value) => setFormData({ ...formData, subCaste: value })}>
-                    <SelectTrigger className="glass-card border-white/10 h-12 rounded-xl">
-                      <SelectValue placeholder="Select sub-caste" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {SUB_CASTE_OPTIONS.map((caste) => (
-                        <SelectItem key={caste} value={caste}>{caste}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
                 </div>
 
                 <div className="space-y-2">

@@ -8,6 +8,21 @@ import { api, createChatWebSocket } from '@/services/api';
 import { useEffect, useRef } from 'react';
 import { getProfilePhoto } from '@/utils/profileUtils';
 import { formatMessageTime } from '@/utils/timeUtils';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
+
+const COMMON_EMOJIS = ['😂', '❤️', '😍', '🤔', '🔥', '👍', '🙌', '✨', '😭', '😅', '😊', '🙏', '🎉', '💩', '💯'];
 
 interface Message {
   id: string;
@@ -24,6 +39,8 @@ export default function ChatConversation() {
   const [matchProfile, setMatchProfile] = useState<any>(null);
   const [currentUserId, setCurrentUserId] = useState<string>('');
   const scrollRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Get current user ID from local storage
@@ -168,6 +185,46 @@ export default function ChatConversation() {
     }
   };
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setIsLoading(true);
+      // In a real app, we'd upload the file and get a URL
+      // For now, we'll simulate it using the profile photo upload service if it returns a URL
+      // Or just toast for now if chat specifically needs a different endpoint
+      const result = await api.profiles.uploadPhoto(file);
+      if (result.photo_url) {
+        await api.chat.sendMessage(id!, result.photo_url, 'image');
+        toast.success('Image sent!');
+      } else {
+        toast.error('Failed to upload image');
+      }
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to upload image');
+    } finally {
+      setIsLoading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const handleUnmatch = async () => {
+    if (!confirm('Are you sure you want to un-match with this person? This action cannot be undone.')) return;
+
+    try {
+      await api.matches.unmatch(id!);
+      toast.success('Un-matched successfully');
+      navigate('/chat');
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to un-match');
+    }
+  };
+
+  const addEmoji = (emoji: string) => {
+    setNewMessage(prev => prev + emoji);
+  };
+
   if (!matchProfile && isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -201,15 +258,24 @@ export default function ChatConversation() {
           <p className="text-xs text-green-500">Online</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="ghost" size="icon" className="rounded-full">
-            <Phone className="w-5 h-5" />
-          </Button>
-          <Button variant="ghost" size="icon" className="rounded-full">
-            <Video className="w-5 h-5" />
-          </Button>
-          <Button variant="ghost" size="icon" className="rounded-full">
-            <MoreVertical className="w-5 h-5" />
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="rounded-full">
+                <MoreVertical className="w-5 h-5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48 glass-card border-white/10">
+              <DropdownMenuItem onClick={handleUnmatch} className="text-destructive focus:text-destructive cursor-pointer">
+                Un-match
+              </DropdownMenuItem>
+              <DropdownMenuItem className="cursor-pointer">
+                Report User
+              </DropdownMenuItem>
+              <DropdownMenuItem className="cursor-pointer">
+                Block User
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </header>
 
@@ -249,8 +315,20 @@ export default function ChatConversation() {
 
       {/* Input */}
       <div className="glass-card border-t border-white/10 p-4 relative z-10">
+        <input
+          type="file"
+          ref={fileInputRef}
+          className="hidden"
+          accept="image/*"
+          onChange={handleImageUpload}
+        />
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" className="rounded-full flex-shrink-0">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="rounded-full flex-shrink-0"
+            onClick={() => fileInputRef.current?.click()}
+          >
             <Image className="w-5 h-5" />
           </Button>
           <div className="flex-1 relative">
@@ -258,22 +336,40 @@ export default function ChatConversation() {
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
               placeholder="Type a message..."
-              className="pr-12 glass-card border-white/10 rounded-full h-12"
+              className="pr-12 glass-card border-white/10 rounded-full h-12 text-sm sm:text-base"
               onKeyPress={(e) => e.key === 'Enter' && handleSend()}
             />
-            <Button
-              variant="ghost"
-              size="icon"
-              className="absolute right-1 top-1/2 -translate-y-1/2 rounded-full"
-            >
-              <Smile className="w-5 h-5" />
-            </Button>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-1 top-1/2 -translate-y-1/2 rounded-full"
+                >
+                  <Smile className="w-5 h-5" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent side="top" align="end" className="w-64 p-2 glass-card border-white/10">
+                <div className="grid grid-cols-5 gap-1">
+                  {COMMON_EMOJIS.map(emoji => (
+                    <button
+                      key={emoji}
+                      onClick={() => addEmoji(emoji)}
+                      className="text-2xl p-2 hover:bg-white/10 rounded-lg transition-colors"
+                    >
+                      {emoji}
+                    </button>
+                  ))}
+                </div>
+              </PopoverContent>
+            </Popover>
           </div>
           <Button
             variant="gradient"
             size="icon"
             className="rounded-full flex-shrink-0"
             onClick={handleSend}
+            disabled={!newMessage.trim()}
           >
             <Send className="w-5 h-5" />
           </Button>

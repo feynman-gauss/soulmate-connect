@@ -24,17 +24,12 @@ export default function Discover() {
         // If backend returns profiles, use them
         if (data && data.length > 0) {
           setProfiles(data);
-          setIsShowingDemo(false);
         } else {
-          // Fallback to single demo profile
-          setProfiles(mockProfiles);
-          setIsShowingDemo(true);
+          setProfiles([]);
         }
       } catch (error) {
         console.error('Failed to fetch profiles:', error);
-        // Fallback to single demo profile on error
-        setProfiles(mockProfiles);
-        setIsShowingDemo(true);
+        setProfiles([]);
       } finally {
         setIsLoading(false);
       }
@@ -103,15 +98,6 @@ export default function Discover() {
           </div>
         </div>
 
-        {/* Demo Profile Banner */}
-        {isShowingDemo && profiles[currentIndex] && (
-          <div className="glass-card rounded-xl p-3 mb-4 border border-primary/30 bg-primary/5">
-            <p className="text-sm text-center text-muted-foreground">
-              👋 This is a <span className="text-primary font-semibold">demo profile</span>. Invite Tyagi community members to see real profiles!
-            </p>
-          </div>
-        )}
-
         {/* Profile Cards */}
         <div className="flex items-center justify-center min-h-[70vh]">
           {isLoading ? (
@@ -132,10 +118,7 @@ export default function Discover() {
               <Sparkles className="w-12 h-12 text-primary mx-auto mb-4" />
               <h3 className="font-display text-xl font-bold mb-2">No more profiles</h3>
               <p className="text-muted-foreground text-sm mb-4">
-                {isShowingDemo
-                  ? "Invite more Tyagi community members to join and find your perfect match!"
-                  : "Check back later for new profiles from the community!"
-                }
+                Check back later for new profiles from the community!
               </p>
               <Button variant="gradient" className="w-full" onClick={() => window.location.reload()}>
                 Refresh
