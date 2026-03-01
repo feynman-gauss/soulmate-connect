@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:hsl(346, 77%, 65%);stop-opacity:1" />
+      <stop offset="50%" style="stop-color:hsl(20, 80%, 60%);stop-opacity:1" />
+      <stop offset="100%" style="stop-color:hsl(38, 92%, 60%);stop-opacity:1" />
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="12" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <radialGradient id="ambient" cx="50%" cy="40%" r="60%">
+      <stop offset="0%" style="stop-color:hsl(346, 77%, 65%);stop-opacity:0.08" />
+      <stop offset="100%" style="stop-color:hsl(20, 14.3%, 4.1%);stop-opacity:0" />
+    </radialGradient>
+  </defs>
+  <rect width="1200" height="630" fill="hsl(20, 14.3%, 4.1%)"/>
+  <rect width="1200" height="630" fill="url(#ambient)"/>
+  <text x="600" y="420" text-anchor="middle" font-family="Georgia, 'Playfair Display', serif" font-weight="700" font-size="380" fill="url(#grad)" filter="url(#glow)">T</text>
+</svg>

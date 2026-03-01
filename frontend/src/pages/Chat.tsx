@@ -12,26 +12,36 @@ export default function Chat() {
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
 
+  const fetchMatches = async () => {
+    try {
+      setIsLoading(true);
+      const matchesData = await api.matches.getAll();
+      setMatches(matchesData && matchesData.length > 0 ? matchesData : []);
+    } catch (error) {
+      console.error('Failed to fetch matches:', error);
+      setMatches([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchMatches = async () => {
-      try {
-        setIsLoading(true);
-        // Fetch matches - each match has a chat
-        const matchesData = await api.matches.getAll();
-        if (matchesData && matchesData.length > 0) {
-          setMatches(matchesData);
-        } else {
-          setMatches([]);
-        }
-      } catch (error) {
-        console.error('Failed to fetch matches:', error);
-        setMatches([]);
-      } finally {
-        setIsLoading(false);
+    fetchMatches();
+
+    // Re-fetch when the user navigates back to this tab/page
+    // so unread counts are refreshed after leaving a conversation
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchMatches();
       }
     };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', fetchMatches);
 
-    fetchMatches();
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', fetchMatches);
+    };
   }, []);
 
   // Filter matches based on search

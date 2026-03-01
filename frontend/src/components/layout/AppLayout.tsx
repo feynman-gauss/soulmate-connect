@@ -1,5 +1,6 @@
 import { ReactNode } from 'react';
 import { BottomNav } from './BottomNav';
+import { NotificationToastContainer } from '@/components/notifications/NotificationToast';
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -15,11 +16,14 @@ export function AppLayout({ children, showNav = true }: AppLayoutProps) {
         <div className="absolute top-1/2 -left-40 w-96 h-96 bg-accent/15 rounded-full blur-3xl animate-pulse-slow" style={{ animationDelay: '2s' }} />
         <div className="absolute -bottom-40 right-1/4 w-72 h-72 bg-primary/10 rounded-full blur-3xl animate-pulse-slow" style={{ animationDelay: '4s' }} />
       </div>
-      
+
       <main className={showNav ? "pb-24" : ""}>
         {children}
       </main>
-      
+
+      {/* Push notification toasts */}
+      <NotificationToastContainer />
+
       {showNav && <BottomNav />}
     </div>
   );
