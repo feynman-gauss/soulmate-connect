@@ -4,6 +4,7 @@ from app.utils.security import decode_token
 from app.database import get_database
 from pymongo.asynchronous.database import AsyncDatabase
 from bson import ObjectId
+from datetime import datetime
 import json
 import logging
 
@@ -61,6 +62,37 @@ class ConnectionManager:
 manager = ConnectionManager()
 
 
+async def broadcast_status_to_matches(user_id: str, is_online: bool, db: AsyncDatabase):
+    """Broadcast online/offline status to all matched users instantly"""
+    try:
+        user_oid = ObjectId(user_id)
+        # Find all active matches for this user
+        matches = await db.matches.find({
+            "$or": [
+                {"user1_id": user_oid},
+                {"user2_id": user_oid}
+            ],
+            "is_active": True
+        }).to_list()
+        
+        status_msg = {
+            "type": "user.status",
+            "user_id": user_id,
+            "is_online": is_online,
+            "last_seen": datetime.utcnow().isoformat() if not is_online else None
+        }
+        
+        for match in matches:
+            # Determine the other user in the match
+            other_user_id = str(match["user2_id"]) if match["user1_id"] == user_oid else str(match["user1_id"])
+            
+            # Send status update only if they're currently connected
+            if manager.is_user_online(other_user_id):
+                await manager.send_personal_message(status_msg, other_user_id)
+    except Exception as e:
+        logger.error(f"Error broadcasting status change for user {user_id}: {e}")
+
+
 async def websocket_endpoint(
     websocket: WebSocket,
     token: str,
@@ -68,6 +100,7 @@ async def websocket_endpoint(
 ):
     """WebSocket endpoint for real-time chat"""
     
+    user_id = None
     try:
         # Verify token
         payload = decode_token(token)
@@ -86,6 +119,9 @@ async def websocket_endpoint(
             "status": "connected",
             "user_id": user_id
         })
+        
+        # Broadcast online status to all matched users instantly
+        await broadcast_status_to_matches(user_id, True, db)
         
         # Listen for messages
         while True:
@@ -147,7 +183,24 @@ async def websocket_endpoint(
         logger.error(f"WebSocket connection error: {e}")
     
     finally:
-        manager.disconnect(websocket, user_id)
+        if user_id:
+            # Disconnect from manager first
+            manager.disconnect(websocket, user_id)
+            
+            # Only broadcast offline if user has NO remaining connections
+            # (they might have multiple tabs open)
+            if not manager.is_user_online(user_id):
+                # Update last_seen in database
+                try:
+                    await db.users.update_one(
+                        {"_id": ObjectId(user_id)},
+                        {"$set": {"last_seen": datetime.utcnow()}}
+                    )
+                except Exception as e:
+                    logger.error(f"Error updating last_seen for user {user_id}: {e}")
+                
+                # Broadcast offline status to matched users instantly
+                await broadcast_status_to_matches(user_id, False, db)
 
 
 # Export manager for use in other modules
