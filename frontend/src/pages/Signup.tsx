@@ -52,6 +52,7 @@ export default function Signup() {
     motherOccupation: '',
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
 
   const calculateAge = (dob: string): number => {
     if (!dob) return 25;
@@ -67,6 +68,7 @@ export default function Signup() {
 
   const handleRegister = async (skipOptional: boolean = false) => {
     setIsLoading(true);
+    setErrorMsg('');
     try {
       await api.auth.register({
         email: formData.email,
@@ -85,7 +87,9 @@ export default function Signup() {
       toast.success('Account created! Welcome to Tyagi Rishta');
       navigate('/discover');
     } catch (error: any) {
-      toast.error(error.message || 'Registration failed');
+      const message = error.message || 'Registration failed';
+      toast.error(message);
+      setErrorMsg(message);
     } finally {
       setIsLoading(false);
     }
@@ -95,6 +99,7 @@ export default function Signup() {
     e.preventDefault();
     if (step < totalSteps) {
       setStep(step + 1);
+      setErrorMsg('');
       return;
     }
     await handleRegister(false);
@@ -124,7 +129,14 @@ export default function Signup() {
       </div>
 
       <header className="p-6 relative z-10 flex items-center justify-between">
-        <button onClick={() => step > 1 ? setStep(step - 1) : navigate('/')}>
+        <button onClick={() => {
+          if (step > 1) {
+            setStep(step - 1);
+            setErrorMsg('');
+          } else {
+            navigate('/');
+          }
+        }}>
           <ArrowLeft className="w-5 h-5" />
         </button>
         {renderStepIndicator()}
@@ -441,6 +453,12 @@ export default function Signup() {
                 </div>
               </form>
             </>
+          )}
+
+          {errorMsg && (
+            <div className="mt-6 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-500 text-sm text-center animate-in fade-in slide-in-from-bottom-2">
+              {errorMsg}
+            </div>
           )}
 
           <p className="text-center mt-6 text-muted-foreground">
